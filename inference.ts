@@ -1,6 +1,6 @@
 import { AstExpr, showAST } from "./ast.ts";
 import type { SubstExpr, SubstScheme, SubstTypeVar } from "./types.ts";
-import { make_arrow, compare, eType, make_term, make_typevar, make_scheme } from "./types.ts";
+import { make_arrow, compare, eType, make_term, make_typevar, make_scheme, int, bool } from "./types.ts";
 import type { Constraint } from "./unification.ts";
 import { substitute, unify } from "./unification.ts";
 
@@ -20,43 +20,52 @@ function findBinding(bindings: Binding[], name: string) {
 }
 
 function finalize(solutions: [SubstExpr, SubstExpr][], type: SubstExpr) {
-	return solutions.reduceRight((acc, [lhs, rhs]) => substitute(rhs as SubstTypeVar, lhs, acc), type)
+	return solutions
+		.reduceRight((acc, [lhs, rhs]) => 
+			substitute(rhs as SubstTypeVar, lhs, acc), type)
 }
 
 function instantiate(generalType: SubstExpr): SubstExpr {
 	if (generalType.type !== "scheme") return generalType;
 
-	const concreteType = generalType.typeVars.reduce<SubstExpr>((acc, variable) => substitute(variable, freeVar(), acc), generalType) as SubstScheme;
+	const concreteType = generalType.typeVars
+		.reduce<SubstExpr>((acc, variable) => 
+			substitute(variable, freeVar(), acc), generalType) as SubstScheme;
 
 	return concreteType.value
 }
 
-function generalize(constraints: Constraint[], bindings: Binding[], type: SubstExpr): SubstScheme {
+function generalize(
+	constraints: Constraint[], 
+	bindings: Binding[], 
+	type: SubstExpr): SubstScheme {
 	const S = unify(constraints)
 	const u1 = finalize(S, type);
-	const env1: Binding[] =  bindings.map(([name, binding]) => [name, finalize(S, binding)])
+	const env1: Binding[] = bindings
+		.map(([name, binding]) => [name, finalize(S, binding)])
 
 	function findVars(expr: SubstExpr): SubstTypeVar[] {
 		switch (expr.type) {
 			case "term": return []
 			case "var": return [expr]
 			case "arrow": return [...findVars(expr.left), ...findVars(expr.right)]
-			case "scheme": throw new Error("Can't happen")//return [...expr.typeVars, ...findVars(expr.value)]
+			case "scheme": throw new Error("Can't happen.")
 		}
 	}
 
 	const vars = findVars(u1);
 	const filtered = vars
 		.filter(v => !env1.some(([name, binding]) => compare(v, binding)))
-		.filter((v, index) => !vars.slice(0, index).some(other => compare(v, other)))
+		.filter((v, index) => !vars.slice(0, index).some(o => compare(v, o)))
 
 	return make_scheme(filtered, type)
 }
 
-function infer(bindings: Array<Binding>, expr: AstExpr): [SubstExpr, Constraint[]] {
+function infer(
+	bindings: Array<Binding>, expr: AstExpr): [SubstExpr, Constraint[]] {
 	switch (expr.type) {
 		case "const": 
-			return [make_term((typeof expr.value === "number") ? eType.int : eType.bool), []]
+			return [(typeof expr.value === "number") ? int : bool, []]
 
 		case "var": 
 			return [instantiate(findBinding(bindings, expr.name)), []]
@@ -64,7 +73,8 @@ function infer(bindings: Array<Binding>, expr: AstExpr): [SubstExpr, Constraint[
 		case "fun":
 		{
 			const type = freeVar()
-			const [bodyType, bodyConstraints] = infer(bindings.concat([[expr.arg.name, type]]), expr.body)
+			const newBindings: Binding[] = [...bindings, [expr.arg.name, type]]
+			const [bodyType, bodyConstraints] = infer(newBindings, expr.body)
 
 			return [
 				make_arrow(type, bodyType),
@@ -109,7 +119,14 @@ function infer(bindings: Array<Binding>, expr: AstExpr): [SubstExpr, Constraint[
 
 		case "let": {
 			const [valueType, valueConst] = infer(bindings, expr.value);
-			const [bodyType, bodyConst] = infer(bindings.concat([[expr.variable.name, generalize(valueConst, bindings, valueType)]]), expr.body)
+
+			const generalType = generalize(valueConst, bindings, valueType)
+			const newBindings: Binding[] = [
+				...bindings,
+				[expr.variable.name, generalType]
+			]
+
+			const [bodyType, bodyConst] = infer(newBindings, expr.body)
 
 			return [
 				bodyType,

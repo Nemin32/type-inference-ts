@@ -27,7 +27,11 @@ export default class Parser {
 	match(c: string) {
 		this.skipWhitespace()
 		const eaten = this.eat()
-		if (eaten !== c) throw new Error(`Expected '${c}', got '${eaten}': ${this.input.slice(this.index)}`)
+		if (eaten !== c) {
+			const remaining = this.input.slice(this.index);
+			const msg = `Expected '${c}', got '${eaten}': ${remaining}` 
+			throw new Error(msg)
+		}
 
 		return eaten;
 	}
@@ -52,7 +56,11 @@ export default class Parser {
 	matchWord(word: string) {
 		this.skipWhitespace()
 		const eaten = this.eatWord()
-		if (eaten !== word) throw new Error(`Expected '${word}', got '${eaten}': ${this.input.slice(this.index)}`)
+		if (eaten !== word) {
+			const remaining = this.input.slice(this.index);
+			const msg = `Expected '${word}', got '${eaten}': ${remaining}` 
+			throw new Error(msg)
+		}
 
 		return eaten;
 	}
@@ -117,7 +125,7 @@ export default class Parser {
 			this.match(")")
 		}
 
-		if (args.length === 0) return variable //throw new Error("There must be at least one argument.");
+		if (args.length === 0) return variable
 		return args.reduce((app, arg) => make_apply(app, arg), variable) as AstApply
 	}
 
