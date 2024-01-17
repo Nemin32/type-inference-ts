@@ -1,10 +1,10 @@
-import { type AstExpr, showAST } from './ast.ts'
-import { type SubstTypeVar, makeTypeVar, type SubstExpr, type SubstScheme, compare, makeScheme, int, bool, makeArrow, makeTerm, eType } from './types.ts'
+import { type AstExpr, showAST, AstVariant } from './ast.ts'
+import { SubstTypeVar, type SubstExpr, SubstScheme, compare, int, bool, eType, TypeVariant, SubstArrow, SubstTerm } from './types.ts'
 import { substitute, type Constraint, unify } from './unification.ts'
 
 let c = 'a'.charCodeAt(0)
 function freeVar (): SubstTypeVar {
-  return makeTypeVar(String.fromCharCode(c++))
+  return new SubstTypeVar(String.fromCharCode(c++))
 }
 
 type Binding = [string, SubstExpr]
@@ -25,7 +25,7 @@ function finalize (
 }
 
 function instantiate (generalType: SubstExpr): SubstExpr {
-  if (generalType.type !== 'scheme') return generalType
+  if (generalType.type !== TypeVariant.Scheme) return generalType
 
   const concreteType = generalType.typeVars
     .reduce<SubstExpr>((acc, variable) =>
@@ -45,10 +45,17 @@ function generalize (
 
   function findVars (expr: SubstExpr): SubstTypeVar[] {
     switch (expr.type) {
-      case 'term': return []
-      case 'var': return [expr]
-      case 'arrow': return [...findVars(expr.left), ...findVars(expr.right)]
-      case 'scheme': throw new Error("Can't happen.")
+      case TypeVariant.Term:
+        return []
+
+      case TypeVariant.Var:
+        return [expr]
+
+      case TypeVariant.Arrow:
+        return [...findVars(expr.left), ...findVars(expr.right)]
+
+      case TypeVariant.Scheme:
+        throw new Error("Can't happen.")
     }
   }
 
@@ -57,38 +64,38 @@ function generalize (
     .filter(v => !env1.some(([name, binding]) => compare(v, binding)))
     .filter((v, index) => !vars.slice(0, index).some(o => compare(v, o)))
 
-  return makeScheme(filtered, type)
+  return new SubstScheme(filtered, type)
 }
 
 function infer (
   bindings: Binding[], expr: AstExpr): [SubstExpr, Constraint[]] {
   switch (expr.type) {
-    case 'const':
+    case AstVariant.Const:
       return [(typeof expr.value === 'number') ? int : bool, []]
 
-    case 'var':
+    case AstVariant.Var:
       return [instantiate(findBinding(bindings, expr.name)), []]
 
-    case 'fun':
+    case AstVariant.Fun:
     {
       const type = freeVar()
       const newBindings: Binding[] = [...bindings, [expr.arg.name, type]]
       const [bodyType, bodyConstraints] = infer(newBindings, expr.body)
 
       return [
-        makeArrow(type, bodyType),
+        new SubstArrow(type, bodyType),
         bodyConstraints
       ]
     }
 
-    case 'apply': {
+    case AstVariant.Apply: {
       const [funcType, funcConstraints] = infer(bindings, expr.fun)
       const [argType, argConstraints] = infer(bindings, expr.arg)
 
       const type = freeVar()
 
       const newConstraints: Constraint[] = [
-        [funcType, makeArrow(argType, type)],
+        [funcType, new SubstArrow(argType, type)],
         ...argConstraints,
         ...funcConstraints
       ]
@@ -96,7 +103,7 @@ function infer (
       return [type, newConstraints]
     }
 
-    case 'if': {
+    case AstVariant.If: {
       const type = freeVar()
 
       const [predType, predConsts] = infer(bindings, expr.pred)
@@ -104,7 +111,7 @@ function infer (
       const [fType, fConsts] = infer(bindings, expr.fPath)
 
       const constraints: Constraint[] = [
-        [predType, makeTerm(eType.bool)],
+        [predType, new SubstTerm(eType.bool)],
         [tType, type],
         [fType, type],
 
@@ -116,7 +123,7 @@ function infer (
       return [type, constraints]
     }
 
-    case 'let': {
+    case AstVariant.Let: {
       const [valueType, valueConst] = infer(bindings, expr.value)
 
       const generalType = generalize(valueConst, bindings, valueType)

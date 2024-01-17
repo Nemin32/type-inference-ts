@@ -1,4 +1,4 @@
-import { type AstExpr, makeApply, makeConst, makeFun, makeLet, showAST, make_var } from './ast.ts'
+import { type AstExpr, showAST, AstApply, AstConst, AstFun, AstLet, AstVar } from './ast.ts'
 import { type Binding, infer, finalize } from './inference.ts'
 import Parser from './parser.ts'
 import { showType, parseType } from './types.ts'
@@ -51,9 +51,9 @@ make_fun(make_var('f'),
         make_const(1))))) */
 
 const ast2 =
-makeLet(make_var('id'), makeFun(make_var('x'), make_var('x')),
-  makeLet(make_var('a'), makeApply(make_var('id'), makeConst(5)),
-    makeApply(make_var('id'), makeConst(true))))
+new AstLet(new AstVar('id'), new AstFun(new AstVar('x'), new AstVar('x')),
+  new AstLet(new AstVar('a'), new AstApply(new AstVar('id'), new AstConst(5)),
+    new AstApply(new AstVar('id'), new AstConst(true))))
 
 const staticEnv: Binding[] = [
   ['+', parseType('int => int => int')],

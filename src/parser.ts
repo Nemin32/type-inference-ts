@@ -1,4 +1,4 @@
-import { type AstLet, makeLet, type AstIf, makeIf, type AstFun, makeFun, type AstApply, type AstVar, type AstExpr, makeApply, type AstConst, makeConst, make_var } from './ast.ts'
+import { AstLet, AstIf, AstFun, AstApply, AstVar, type AstExpr, AstConst } from './ast.ts'
 
 export default class Parser {
   index: number
@@ -88,7 +88,7 @@ export default class Parser {
     const body = this.parse()
     this.matchWord('end')
 
-    return makeLet(variable, value, body)
+    return new AstLet(variable, value, body)
   }
 
   parseIf (): AstIf {
@@ -100,7 +100,7 @@ export default class Parser {
     const fPath = this.parse()
     this.matchWord('end')
 
-    return makeIf(pred, tPath, fPath)
+    return new AstIf(pred, tPath, fPath)
   }
 
   parseFun (): AstFun {
@@ -110,7 +110,7 @@ export default class Parser {
     const body = this.parse()
     this.matchWord('end')
 
-    return makeFun(variable, body)
+    return new AstFun(variable, body)
   }
 
   parseApply (): AstApply | AstVar {
@@ -125,7 +125,8 @@ export default class Parser {
     }
 
     if (args.length === 0) return variable
-    return args.reduce((app, arg) => makeApply(app, arg), variable) as AstApply
+    return args.reduce((app, arg) =>
+      new AstApply(app, arg), variable) as AstApply
   }
 
   parseConst (): AstConst {
@@ -133,17 +134,17 @@ export default class Parser {
 
     const value = this.eatWord()
     if (value === 'true' || value === 'false') {
-      return makeConst(value === 'true')
+      return new AstConst(value === 'true')
     }
 
-    return makeConst(parseInt(value))
+    return new AstConst(parseInt(value))
   }
 
   parseVar (): AstVar {
     this.skipWhitespace()
     const name = this.eatWord()
 
-    return make_var(name)
+    return new AstVar(name)
   }
 
   parse (): AstExpr {

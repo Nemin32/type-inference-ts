@@ -1,4 +1,4 @@
-import { makeArrow, compare, makeScheme, showType, type SubstExpr, type SubstTypeVar } from './types.ts'
+import { makeArrow, compare, makeScheme, showType, type SubstExpr, type SubstTypeVar, TypeVariant } from './types.ts'
 
 // A Constraint is a pair of two type expressions in the form of expr1 = expr2
 // This is how we encode information about our types. For instance, if we have
@@ -23,24 +23,24 @@ function substitute (
   variable: SubstTypeVar, substitution: SubstExpr, expr: SubstExpr): SubstExpr {
   switch (expr.type) {
     // Terms cannot be substituted, so they're returned as-is.
-    case 'term':
+    case TypeVariant.Term:
       return expr
 
       // We only want to replace variables that are the same as
       // the argument `variable`.
-    case 'var':
+    case TypeVariant.Var:
       return compare(expr, variable) ? substitution : expr
 
       // In arrows we simply recurse into its left and right side,
       // propaganting the changes until we reach a base type (`term` or `var`).
-    case 'arrow': return makeArrow(
+    case TypeVariant.Arrow: return makeArrow(
       substitute(variable, substitution, expr.left),
       substitute(variable, substitution, expr.right)
     )
 
       // With type schemes, we leave the type variable alone
       // and only substitute in the body.
-    case 'scheme': return makeScheme(
+    case TypeVariant.Scheme: return makeScheme(
       expr.typeVars,
       substitute(variable, substitution, expr.value)
     )
@@ -62,14 +62,14 @@ function unify (constraints: Constraint[]): Constraint[] {
   // If lhs is an arrow of lhs1 => lhs2 and rhs is an arrow of rhs1 => rhs2
   // then we can split lhs = rhs into lhs1 = rhs1 and lhs2 = rhs2
   // and thus get rid of the arrow.
-  if (lhs.type === 'arrow' && rhs.type === 'arrow') {
+  if (lhs.type === TypeVariant.Arrow && rhs.type === TypeVariant.Arrow) {
     return unify(rest.concat([[lhs.left, rhs.left], [lhs.right, rhs.right]]))
   }
 
   // If lhs is a type variable and rhs is something else,
   // We substitute every instance of lhs as rhs in the other constraints
   // and add lhs = rhs to the unified constraints.
-  if (lhs.type === 'var') {
+  if (lhs.type === TypeVariant.Var) {
     const substitutedRest: Constraint[] =
       rest.map(([left, right]) => [
         substitute(lhs, rhs, left),
@@ -81,7 +81,7 @@ function unify (constraints: Constraint[]): Constraint[] {
 
   // If rhs is a type variable, we do the same as above, just with using lhs
   // as the substitution.
-  if (rhs.type === 'var') {
+  if (rhs.type === TypeVariant.Var) {
     const substitutedRest: Constraint[] =
       rest.map(([left, right]) => [
         substitute(rhs, lhs, left),
