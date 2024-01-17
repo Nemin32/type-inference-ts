@@ -1,5 +1,4 @@
-import type { SubstExpr, SubstTypeVar } from './types.ts'
-import { makeArrow, compare, makeScheme, showType } from './types.ts'
+import { makeArrow, compare, makeScheme, showType, type SubstExpr, type SubstTypeVar } from './types.ts'
 
 // A Constraint is a pair of two type expressions in the form of expr1 = expr2
 // This is how we encode information about our types. For instance, if we have
@@ -77,7 +76,7 @@ function unify (constraints: Constraint[]): Constraint[] {
         substitute(lhs, rhs, right)
       ])
 
-    return unify([...substitutedRest, [rhs, lhs]])
+    return unify(substitutedRest).concat([[rhs, lhs]])
   }
 
   // If rhs is a type variable, we do the same as above, just with using lhs
@@ -89,7 +88,7 @@ function unify (constraints: Constraint[]): Constraint[] {
         substitute(rhs, lhs, right)
       ])
 
-    return unify([...substitutedRest, [lhs, rhs]])
+    return unify(substitutedRest).concat([[lhs, rhs]])
   }
 
   // If none of the rules above apply, there is an inconsistency in

@@ -1,8 +1,6 @@
 import { type AstExpr, showAST } from './ast.ts'
-import type { SubstExpr, SubstScheme, SubstTypeVar } from './types.ts'
-import { makeArrow, compare, eType, makeTerm, makeTypeVar, makeScheme, int, bool } from './types.ts'
-import type { Constraint } from './unification.ts'
-import { substitute, unify } from './unification.ts'
+import { type SubstTypeVar, makeTypeVar, type SubstExpr, type SubstScheme, compare, makeScheme, int, bool, makeArrow, makeTerm, eType } from './types.ts'
+import { substitute, type Constraint, unify } from './unification.ts'
 
 let c = 'a'.charCodeAt(0)
 function freeVar (): SubstTypeVar {

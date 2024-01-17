@@ -1,5 +1,5 @@
-import { type AstExpr, make_apply, make_const, make_fun, make_let, showAST, make_var } from './ast.ts'
-import { type Binding, finalize, infer } from './inference.ts'
+import { type AstExpr, makeApply, makeConst, makeFun, makeLet, showAST, make_var } from './ast.ts'
+import { type Binding, infer, finalize } from './inference.ts'
 import Parser from './parser.ts'
 import { showType, parseType } from './types.ts'
 import { unify } from './unification.ts'
@@ -27,12 +27,14 @@ function run (bindings: Binding[], input: string | AstExpr): void {
   console.log('\nInferred type: ' + showType(type))
   console.log('Constraints:')
   constraints
-    .forEach(([lhs, rhs]) => { console.log(`${showType(lhs)} = ${showType(rhs)}`) })
+    .map(([lhs, rhs]) => `${showType(lhs)} = ${showType(rhs)}`)
+    .forEach(e => { console.log(e) })
 
   console.log('\nSolved constraints:')
   const solutions = unify(constraints)
   solutions
-    .forEach(([lhs, rhs]) => { console.log(`${showType(lhs)} / ${showType(rhs)}`) })
+    .map(([lhs, rhs]) => `${showType(lhs)} / ${showType(rhs)}`)
+    .forEach(e => { console.log(e) })
 
   const finalType = finalize(solutions, type)
   console.log('\nFinal type: ' + showType(finalType))
@@ -49,9 +51,9 @@ make_fun(make_var('f'),
         make_const(1))))) */
 
 const ast2 =
-make_let(make_var('id'), make_fun(make_var('x'), make_var('x')),
-  make_let(make_var('a'), make_apply(make_var('id'), make_const(5)),
-    make_apply(make_var('id'), make_const(true))))
+makeLet(make_var('id'), makeFun(make_var('x'), make_var('x')),
+  makeLet(make_var('a'), makeApply(make_var('id'), makeConst(5)),
+    makeApply(make_var('id'), makeConst(true))))
 
 const staticEnv: Binding[] = [
   ['+', parseType('int => int => int')],

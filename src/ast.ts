@@ -42,12 +42,8 @@ function showAST (ast: AstExpr, indent: number = 0): string {
         return ast.name
 
       case 'fun': {
-        const body = showAST(ast.body, indent + 2)
-
-        const str =
-        'fun ' + showAST(ast.arg) + ' ->\n' +
-        body + '\n' +
-        spaces + 'end'
+        const body = showAST(ast.body)
+        const str = 'fun ' + showAST(ast.arg) + ' -> ' + body + ' end'
 
         return str
       }
@@ -90,6 +86,6 @@ export type {
 }
 
 export {
-  makeApply as make_apply, makeConst as make_const, makeFun as make_fun, makeIf as make_if, makeLet as make_let,
+  makeApply, makeConst, makeFun, makeIf, makeLet,
   showAST, makeAstVar as make_var
 }
