@@ -4,15 +4,15 @@ enum eType {
 }
 
 type SubstTerm = {type: "term", variant: eType}
-type SubstVar = {type: "var", name: string}
+type SubstTypeVar = {type: "var", name: string}
 type SubstArrow = {type: "arrow", left: SubstExpr, right: SubstExpr}
-type SubstScheme = {type: "scheme", typeVars: SubstVar[], value: SubstExpr}
-type SubstExpr = SubstTerm | SubstVar | SubstArrow | SubstScheme
+type SubstScheme = {type: "scheme", typeVars: SubstTypeVar[], value: SubstExpr}
+type SubstExpr = SubstTerm | SubstTypeVar | SubstArrow | SubstScheme
 
-const term = (t: eType): SubstTerm => ({type: "term", variant: t})
-const vari = (n: string): SubstVar => ({type: "var", name: n})
-const arrow = (l: SubstExpr, r: SubstExpr): SubstArrow => ({type: "arrow", left: l, right: r})
-const scheme = (typeVars: SubstVar[], value: SubstExpr): SubstScheme => ({type: "scheme", typeVars, value})
+const make_term = (t: eType): SubstTerm => ({type: "term", variant: t})
+const make_typevar = (n: string): SubstTypeVar => ({type: "var", name: n})
+const make_arrow = (l: SubstExpr, r: SubstExpr): SubstArrow => ({type: "arrow", left: l, right: r})
+const make_scheme = (typeVars: SubstTypeVar[], value: SubstExpr): SubstScheme => ({type: "scheme", typeVars, value})
 
 /**
  * Compares lhs and rhs by value (instead of per reference as usual in JS).
@@ -29,7 +29,7 @@ function compare(lhs: SubstExpr, rhs: SubstExpr): boolean {
 		return lhs.variant === (rhs as SubstTerm).variant;
 
 	if (lhs.type === "var") 
-		return lhs.name === (rhs as SubstVar).name;
+		return lhs.name === (rhs as SubstTypeVar).name;
 
 	if (lhs.type === "arrow")
 		return compare(lhs.left, (rhs as SubstArrow).left) && 
@@ -52,6 +52,6 @@ function showType(expr: SubstExpr): string {
 	}
 }
 
-export type { SubstExpr, SubstScheme, SubstVar }
+export type { SubstExpr, SubstScheme, SubstTypeVar }
 
-export { arrow, compare, eType, scheme, showType, term, vari }
+export { make_arrow, compare, eType, make_scheme, showType, make_term, make_typevar }

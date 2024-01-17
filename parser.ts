@@ -1,4 +1,4 @@
-import { AstLet, leta, AstIf, ifa, AstFun, funa, AstApply, AstVar, AstExpr, applya, AstConst, consta, vara } from "./ast.ts";
+import { AstLet, make_let, AstIf, make_if, AstFun, make_fun, AstApply, AstVar, AstExpr, make_apply, AstConst, make_const, make_var } from "./ast.ts";
 
 export default class Parser {
 	index: number;
@@ -81,7 +81,7 @@ export default class Parser {
 		const body = this.parse()
 		this.matchWord("end")
 
-		return leta(variable, value, body);
+		return make_let(variable, value, body);
 	}
 
 	parseIf(): AstIf {
@@ -93,7 +93,7 @@ export default class Parser {
 		const fPath = this.parse()
 		this.matchWord("end")
 
-		return ifa(pred, tPath, fPath)
+		return make_if(pred, tPath, fPath)
 	}
 
 	parseFun(): AstFun {
@@ -103,7 +103,7 @@ export default class Parser {
 		const body = this.parse()
 		this.matchWord("end")
 
-		return funa(variable, body)
+		return make_fun(variable, body)
 	}
 
 	parseApply(): AstApply | AstVar {
@@ -118,7 +118,7 @@ export default class Parser {
 		}
 
 		if (args.length === 0) return variable //throw new Error("There must be at least one argument.");
-		return args.reduce((app, arg) => applya(app, arg), variable) as AstApply
+		return args.reduce((app, arg) => make_apply(app, arg), variable) as AstApply
 	}
 
 	parseConst(): AstConst {
@@ -126,17 +126,17 @@ export default class Parser {
 
 		const value = this.eatWord()
 		if (value === "true" || value === "false") {
-			return consta(value === "true");
+			return make_const(value === "true");
 		}
 
-		return consta(parseInt(value));
+		return make_const(parseInt(value));
 	}
 
 	parseVar(): AstVar {
 		this.skipWhitespace()
 		const name = this.eatWord()
 
-		return vara(name);
+		return make_var(name);
 	}
 
 	parse(): AstExpr {

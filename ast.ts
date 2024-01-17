@@ -6,16 +6,22 @@ type AstIf = {type: "if", pred: AstExpr, tPath: AstExpr, fPath: AstExpr}
 type AstLet = {type: "let", variable: AstVar, value: AstExpr, body: AstExpr}
 type AstExpr = AstFun | AstConst | AstVar | AstApply | AstIf | AstLet
 
-const consta = (value: number | boolean): AstConst => ({type: "const", value})
-const vara = (name: string): AstVar => ({type: "var", name})
-const funa = (arg: AstVar, body: AstExpr): AstFun  => ({type: "fun", arg, body})
-const applya = (fun: AstExpr, arg: AstExpr): AstApply => ({type: "apply", fun, arg})
-const ifa  = (pred: AstExpr, tPath: AstExpr, fPath: AstExpr): AstIf => ({type: "if", pred, tPath, fPath})
-const leta = (variable: AstVar, value: AstExpr, body: AstExpr): AstLet => ({type: "let", body, value, variable})
+const make_const = (value: number | boolean): AstConst => ({type: "const", value})
+const make_var = (name: string): AstVar => ({type: "var", name})
+const make_fun = (arg: AstVar, body: AstExpr): AstFun  => ({type: "fun", arg, body})
+const make_apply = (fun: AstExpr, arg: AstExpr): AstApply => ({type: "apply", fun, arg})
+const make_if  = (pred: AstExpr, tPath: AstExpr, fPath: AstExpr): AstIf => ({type: "if", pred, tPath, fPath})
+const make_let = (variable: AstVar, value: AstExpr, body: AstExpr): AstLet => ({type: "let", body, value, variable})
 
+/**
+ * Converts `ast` to a formatted string.
+ * @param ast An AST element.
+ * @param indent Optional. Used to keep track of the indentation of elements.
+ * @returns A formatted string representation of `ast`.
+ */
 function showAST(ast: AstExpr, indent: number = 0): string {
 	const spaces = " ".repeat(indent)
-	//console.log(spaces)
+
 	switch (ast.type) {
 		case "const": return spaces + String(ast.value)
 		case "var": return spaces + ast.name
@@ -31,6 +37,6 @@ export type {
 }
 
 export {
-	applya, consta, funa, ifa, leta,
-	showAST, vara
+	make_apply, make_const, make_fun, make_if, make_let,
+	showAST, make_var
 }

@@ -1,15 +1,15 @@
-import { AstExpr, applya, consta, funa, ifa, leta, showAST, vara } from "./ast.ts";
+import { AstExpr, make_apply, make_const, make_fun, make_if, make_let, showAST, make_var } from "./ast.ts";
 import { Binding, finalize, infer } from "./inference.ts";
 import Parser from "./parser.ts";
-import { arrow, eType, showType, term, vari } from "./types.ts";
+import { make_arrow, eType, showType, make_term, make_typevar } from "./types.ts";
 import { Constraint, unify } from "./unification.ts";
 
 
 const constraints: Constraint[] = [[
-	arrow(term(eType.int), arrow(term(eType.int), term(eType.int))), 
-	arrow(term(eType.int), arrow(vari("a"), term(eType.int)))
+	make_arrow(make_term(eType.int), make_arrow(make_term(eType.int), make_term(eType.int))), 
+	make_arrow(make_term(eType.int), make_arrow(make_typevar("a"), make_term(eType.int)))
 ],
-	[vari("a"), term(eType.int)]
+	[make_typevar("a"), make_term(eType.int)]
 
 ]
 
@@ -37,7 +37,7 @@ function run(bindings: Binding[], input: string | AstExpr) {
 //run([], fun("a", consta(5)))
 
 // fun f -> fun x -> f(x + 1)
-const ast = funa(vara("f"), funa(vara("x"), applya(vara("f"), applya(applya(vara("+"), vara("x")), consta(1)))))
+const ast = make_fun(make_var("f"), make_fun(make_var("x"), make_apply(make_var("f"), make_apply(make_apply(make_var("+"), make_var("x")), make_const(1)))))
 
 // fun f -> 
 // 	fun x -> 
@@ -47,21 +47,21 @@ const ast = funa(vara("f"), funa(vara("x"), applya(vara("f"), applya(applya(vara
 //      f(x) 
 //    end
 const ast2 = 
-funa(vara("f"), 
-	funa(vara("x"),
-		ifa(applya(applya(vara("<="), applya(vara("f"), vara("x"))), consta(5)),
-			applya(applya(vara("*"), vara("x")), consta(5)),
-			applya(vara("f"), vara("x")))))
+make_fun(make_var("f"), 
+	make_fun(make_var("x"),
+		make_if(make_apply(make_apply(make_var("<="), make_apply(make_var("f"), make_var("x"))), make_const(5)),
+			make_apply(make_apply(make_var("*"), make_var("x")), make_const(5)),
+			make_apply(make_var("f"), make_var("x")))))
 
 const ast3 =
-leta(vara("id"), funa(vara("x"), vara("x")),
-	leta(vara("a"), applya(vara("id"), consta(5)),
-		applya(vara("id"), consta(true))))
+make_let(make_var("id"), make_fun(make_var("x"), make_var("x")),
+	make_let(make_var("a"), make_apply(make_var("id"), make_const(5)),
+		make_apply(make_var("id"), make_const(true))))
 
 const staticEnv: Binding[] = [
-	["+", arrow(term(eType.int), arrow(term(eType.int), term(eType.int)))],
-	["*", arrow(term(eType.int), arrow(term(eType.int), term(eType.int)))],
-	["<=", arrow(term(eType.int), arrow(term(eType.int), term(eType.bool)))],
+	["+", make_arrow(make_term(eType.int), make_arrow(make_term(eType.int), make_term(eType.int)))],
+	["*", make_arrow(make_term(eType.int), make_arrow(make_term(eType.int), make_term(eType.int)))],
+	["<=", make_arrow(make_term(eType.int), make_arrow(make_term(eType.int), make_term(eType.bool)))],
 ]
 
 // run(staticEnv, ast2)

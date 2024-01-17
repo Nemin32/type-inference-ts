@@ -1,5 +1,5 @@
-import type { SubstExpr, SubstVar } from "./types.ts";
-import { arrow, compare, scheme, showType } from "./types.ts";
+import type { SubstExpr, SubstTypeVar } from "./types.ts";
+import { make_arrow, compare, make_scheme, showType } from "./types.ts";
 
 // A Constraint is a pair of two type expressions in the form of expr1 = expr2
 // This is how we encode information about our types. For instance, if we have
@@ -12,12 +12,12 @@ type Constraint = [SubstExpr, SubstExpr];
 
 /**
  * The algorithm recursively replaces all instances of `variable` in `expr` with `substitution`.
- * @param {SubstVar} variable The variable to be substituted.
+ * @param {SubstTypeVar} variable The variable to be substituted.
  * @param {SubstExpr} substitution The expression that will be substituted for `variable`.
  * @param {SubstExpr} expr The expression we want to do the substitution in.
  * @returns {SubstExpr} A copy of `expr` where all instances of `variable` have been substituted for `substitution`.
  */
-function substitute(variable: SubstVar, substitution: SubstExpr, expr: SubstExpr): SubstExpr {
+function substitute(variable: SubstTypeVar, substitution: SubstExpr, expr: SubstExpr): SubstExpr {
 	if (variable.type !== "var") throw new Error("Expected variable, got " + variable.type)
 
 	switch (expr.type) {
@@ -30,14 +30,14 @@ function substitute(variable: SubstVar, substitution: SubstExpr, expr: SubstExpr
 			return compare(expr, variable) ? substitution : expr;
 
 		// In arrows we simply recurse into its left and right side, propaganting the changes until we reach a base type (`term` or `var`).
-		case "arrow": return arrow(
+		case "arrow": return make_arrow(
 			substitute(variable, substitution, expr.left),
 			substitute(variable, substitution, expr.right),
 		)
 
 		// With type schemes, we leave the type variable alone and only substitute in the body.
 		case "scheme": 
-			return scheme(expr.typeVars, substitute(variable, substitution, expr.value))
+			return make_scheme(expr.typeVars, substitute(variable, substitution, expr.value))
 	}
 	
 	throw new Error(`Cannot substitute! ${showType(expr)}`)

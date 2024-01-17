@@ -1,12 +1,12 @@
 import { AstExpr, showAST } from "./ast.ts";
-import type { SubstExpr, SubstScheme, SubstVar } from "./types.ts";
-import { arrow, compare, eType, term, vari } from "./types.ts";
+import type { SubstExpr, SubstScheme, SubstTypeVar } from "./types.ts";
+import { make_arrow, compare, eType, make_term, make_typevar, make_scheme } from "./types.ts";
 import type { Constraint } from "./unification.ts";
 import { substitute, unify } from "./unification.ts";
 
 let c = "a".charCodeAt(0)
 function freeVar() {
-	return vari(String.fromCharCode(c++))
+	return make_typevar(String.fromCharCode(c++))
 }
 
 type Binding = [string, SubstExpr]
@@ -20,7 +20,7 @@ function findBinding(bindings: Binding[], name: string) {
 }
 
 function finalize(solutions: [SubstExpr, SubstExpr][], type: SubstExpr) {
-	return solutions.reduceRight((acc, [lhs, rhs]) => substitute(rhs as SubstVar, lhs, acc), type)
+	return solutions.reduceRight((acc, [lhs, rhs]) => substitute(rhs as SubstTypeVar, lhs, acc), type)
 }
 
 function instantiate(generalType: SubstExpr): SubstExpr {
@@ -36,7 +36,7 @@ function generalize(constraints: Constraint[], bindings: Binding[], type: SubstE
 	const u1 = finalize(S, type);
 	const env1: Binding[] =  bindings.map(([name, binding]) => [name, finalize(S, binding)])
 
-	function findVars(expr: SubstExpr): SubstVar[] {
+	function findVars(expr: SubstExpr): SubstTypeVar[] {
 		switch (expr.type) {
 			case "term": return []
 			case "var": return [expr]
@@ -50,17 +50,13 @@ function generalize(constraints: Constraint[], bindings: Binding[], type: SubstE
 		.filter(v => !env1.some(([name, binding]) => compare(v, binding)))
 		.filter((v, index) => !vars.slice(0, index).some(other => compare(v, other)))
 
-	return {
-		type: "scheme",
-		typeVars: filtered,
-		value: type
-	}
+	return make_scheme(filtered, type)
 }
 
 function infer(bindings: Array<Binding>, expr: AstExpr): [SubstExpr, Constraint[]] {
 	switch (expr.type) {
 		case "const": 
-			return [term((typeof expr.value === "number") ? eType.int : eType.bool), []]
+			return [make_term((typeof expr.value === "number") ? eType.int : eType.bool), []]
 
 		case "var": 
 			return [instantiate(findBinding(bindings, expr.name)), []]
@@ -71,7 +67,7 @@ function infer(bindings: Array<Binding>, expr: AstExpr): [SubstExpr, Constraint[
 			const [bodyType, bodyConstraints] = infer(bindings.concat([[expr.arg.name, type]]), expr.body)
 
 			return [
-				arrow(type, bodyType),
+				make_arrow(type, bodyType),
 				bodyConstraints
 			]
 		}
@@ -83,7 +79,7 @@ function infer(bindings: Array<Binding>, expr: AstExpr): [SubstExpr, Constraint[
 			const type = freeVar()
 
 			const newConstraints: Constraint[] = [
-				[funcType, arrow(argType, type)],
+				[funcType, make_arrow(argType, type)],
 				...argConstraints,
 				...funcConstraints
 			]
@@ -99,7 +95,7 @@ function infer(bindings: Array<Binding>, expr: AstExpr): [SubstExpr, Constraint[
 			const [fType, fConsts] = infer(bindings, expr.fPath);
 
 			const constraints: Constraint[] = [
-				[predType, term(eType.bool)],
+				[predType, make_term(eType.bool)],
 				[tType, type],
 				[fType, type],
 
