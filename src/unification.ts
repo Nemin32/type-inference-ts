@@ -1,4 +1,4 @@
-import { SubstArrow, SubstScheme, compare, showType, type SubstExpr, type SubstTypeVar, TypeVariant } from './types.ts'
+import { TypeArrow, TypeScheme, compare, showType, type TypeExpr, type TypeVar, TypeVariant } from './types.ts'
 
 // A Constraint is a pair of two type expressions in the form of expr1 = expr2
 // This is how we encode information about our types. For instance, if we have
@@ -7,20 +7,20 @@ import { SubstArrow, SubstScheme, compare, showType, type SubstExpr, type SubstT
 //    'a -> 'b
 // We know that the second equation is really
 //    int -> 'b
-type Constraint = [SubstExpr, SubstExpr]
+type Constraint = [TypeExpr, TypeExpr]
 
 /**
  * The algorithm recursively replaces all instances of `variable` in `expr`
  * with `substitution`.
- * @param {SubstTypeVar} variable The variable to be substituted.
- * @param {SubstExpr} substitution The expression that will be substituted
+ * @param {TypeVar} variable The variable to be substituted.
+ * @param {TypeExpr} substitution The expression that will be substituted
  *     for `variable`.
- * @param {SubstExpr} expr The expression we want to do the substitution in.
- * @returns {SubstExpr} A copy of `expr` where all instances of `variable`
+ * @param {TypeExpr} expr The expression we want to do the substitution in.
+ * @returns {TypeExpr} A copy of `expr` where all instances of `variable`
  *     have been substituted for `substitution`.
  */
 function substitute (
-  variable: SubstTypeVar, substitution: SubstExpr, expr: SubstExpr): SubstExpr {
+  variable: TypeVar, substitution: TypeExpr, expr: TypeExpr): TypeExpr {
   switch (expr.type) {
     // Terms cannot be substituted, so they're returned as-is.
     case TypeVariant.Term:
@@ -33,14 +33,14 @@ function substitute (
 
       // In arrows we simply recurse into its left and right side,
       // propaganting the changes until we reach a base type (`term` or `var`).
-    case TypeVariant.Arrow: return new SubstArrow(
+    case TypeVariant.Arrow: return new TypeArrow(
       substitute(variable, substitution, expr.left),
       substitute(variable, substitution, expr.right)
     )
 
       // With type schemes, we leave the type variable alone
       // and only substitute in the body.
-    case TypeVariant.Scheme: return new SubstScheme(
+    case TypeVariant.Scheme: return new TypeScheme(
       expr.typeVars,
       substitute(variable, substitution, expr.value)
     )

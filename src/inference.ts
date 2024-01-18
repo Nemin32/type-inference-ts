@@ -1,15 +1,15 @@
 import { type AstExpr, showAST, AstVariant } from './ast.ts'
-import { SubstTypeVar, type SubstExpr, SubstScheme, compare, int, bool, eType, TypeVariant, SubstArrow, SubstTerm } from './types.ts'
+import { TypeVar, type TypeExpr, TypeScheme, compare, int, bool, eType, TypeVariant, TypeArrow, TypeTerm } from './types.ts'
 import { substitute, type Constraint, unify } from './unification.ts'
 
 let c = 'a'.charCodeAt(0)
-function freeVar (): SubstTypeVar {
-  return new SubstTypeVar(String.fromCharCode(c++))
+function freeVar (): TypeVar {
+  return new TypeVar(String.fromCharCode(c++))
 }
 
-type Binding = [string, SubstExpr]
+type Binding = [string, TypeExpr]
 
-function findBinding (bindings: Binding[], name: string): SubstExpr {
+function findBinding (bindings: Binding[], name: string): TypeExpr {
   for (const [bname, value] of bindings) {
     if (bname === name) return value
   }
@@ -18,18 +18,18 @@ function findBinding (bindings: Binding[], name: string): SubstExpr {
 }
 
 function finalize (
-  solutions: Array<[SubstExpr, SubstExpr]>, type: SubstExpr): SubstExpr {
+  solutions: Array<[TypeExpr, TypeExpr]>, type: TypeExpr): TypeExpr {
   return solutions
     .reduceRight((acc, [lhs, rhs]) =>
-      substitute(rhs as SubstTypeVar, lhs, acc), type)
+      substitute(rhs as TypeVar, lhs, acc), type)
 }
 
-function instantiate (generalType: SubstExpr): SubstExpr {
+function instantiate (generalType: TypeExpr): TypeExpr {
   if (generalType.type !== TypeVariant.Scheme) return generalType
 
   const concreteType = generalType.typeVars
-    .reduce<SubstExpr>((acc, variable) =>
-    substitute(variable, freeVar(), acc), generalType) as SubstScheme
+    .reduce<TypeExpr>((acc, variable) =>
+    substitute(variable, freeVar(), acc), generalType) as TypeScheme
 
   return concreteType.value
 }
@@ -37,13 +37,13 @@ function instantiate (generalType: SubstExpr): SubstExpr {
 function generalize (
   constraints: Constraint[],
   bindings: Binding[],
-  type: SubstExpr): SubstScheme {
+  type: TypeExpr): TypeScheme {
   const S: Constraint[] = unify(constraints)
   const u1 = finalize(S, type)
   const env1: Binding[] = bindings
     .map(([name, binding]) => [name, finalize(S, binding)])
 
-  function findVars (expr: SubstExpr): SubstTypeVar[] {
+  function findVars (expr: TypeExpr): TypeVar[] {
     switch (expr.type) {
       case TypeVariant.Term:
         return []
@@ -64,11 +64,11 @@ function generalize (
     .filter(v => !env1.some(([name, binding]) => compare(v, binding)))
     .filter((v, index) => !vars.slice(0, index).some(o => compare(v, o)))
 
-  return new SubstScheme(filtered, type)
+  return new TypeScheme(filtered, type)
 }
 
 function infer (
-  bindings: Binding[], expr: AstExpr): [SubstExpr, Constraint[]] {
+  bindings: Binding[], expr: AstExpr): [TypeExpr, Constraint[]] {
   switch (expr.type) {
     case AstVariant.Const:
       return [(typeof expr.value === 'number') ? int : bool, []]
@@ -83,7 +83,7 @@ function infer (
       const [bodyType, bodyConstraints] = infer(newBindings, expr.body)
 
       return [
-        new SubstArrow(type, bodyType),
+        new TypeArrow(type, bodyType),
         bodyConstraints
       ]
     }
@@ -95,7 +95,7 @@ function infer (
       const type = freeVar()
 
       const newConstraints: Constraint[] = [
-        [funcType, new SubstArrow(argType, type)],
+        [funcType, new TypeArrow(argType, type)],
         ...argConstraints,
         ...funcConstraints
       ]
@@ -111,7 +111,7 @@ function infer (
       const [fType, fConsts] = infer(bindings, expr.fPath)
 
       const constraints: Constraint[] = [
-        [predType, new SubstTerm(eType.bool)],
+        [predType, new TypeTerm(eType.bool)],
         [tType, type],
         [fType, type],
 

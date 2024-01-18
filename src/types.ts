@@ -10,52 +10,52 @@ enum TypeVariant {
   Scheme
 }
 
-class SubstTerm {
+class TypeTerm {
   readonly type = TypeVariant.Term
   constructor (readonly variant: eType) {}
 }
 
-class SubstTypeVar {
+class TypeVar {
   readonly type = TypeVariant.Var
   constructor (readonly name: string) {}
 }
 
-class SubstArrow {
+class TypeArrow {
   readonly type = TypeVariant.Arrow
-  constructor (readonly left: SubstExpr, readonly right: SubstExpr) {}
+  constructor (readonly left: TypeExpr, readonly right: TypeExpr) {}
 }
 
-class SubstScheme {
+class TypeScheme {
   readonly type = TypeVariant.Scheme
-  constructor (readonly typeVars: SubstTypeVar[], readonly value: SubstExpr) {}
+  constructor (readonly typeVars: TypeVar[], readonly value: TypeExpr) {}
 }
 
-type SubstExpr = SubstTerm | SubstTypeVar | SubstArrow | SubstScheme
+type TypeExpr = TypeTerm | TypeVar | TypeArrow | TypeScheme
 
-const int = new SubstTerm(eType.int)
-const bool = new SubstTerm(eType.bool)
+const int = new TypeTerm(eType.int)
+const bool = new TypeTerm(eType.bool)
 
 /**
  * Compares lhs and rhs by value (instead of per reference as usual in JS).
- * @param {SubstExpr} lhs - A type expression.
- * @param {SubstExpr} rhs - Another type expression.
+ * @param {TypeExpr} lhs - A type expression.
+ * @param {TypeExpr} rhs - Another type expression.
  * @returns {boolean} Whether lhs == rhs
  */
-function compare (lhs: SubstExpr, rhs: SubstExpr): boolean {
+function compare (lhs: TypeExpr, rhs: TypeExpr): boolean {
   // Because of this if, we can safely cast rhs to whichever form we
   // want to compare with. Sadly TS isn't smart enough to realize this itself.
   if (lhs.type !== rhs.type) return false
 
   switch (lhs.type) {
     case TypeVariant.Term:
-      return lhs.variant === (rhs as SubstTerm).variant
+      return lhs.variant === (rhs as TypeTerm).variant
 
     case TypeVariant.Var:
-      return lhs.name === (rhs as SubstTypeVar).name
+      return lhs.name === (rhs as TypeVar).name
 
     case TypeVariant.Arrow:
-      return compare(lhs.left, (rhs as SubstArrow).left) &&
-             compare(lhs.right, (rhs as SubstArrow).right)
+      return compare(lhs.left, (rhs as TypeArrow).left) &&
+             compare(lhs.right, (rhs as TypeArrow).right)
 
     case TypeVariant.Scheme: throw new Error('Cannot compare type schemes.')
   }
@@ -65,10 +65,10 @@ function compare (lhs: SubstExpr, rhs: SubstExpr): boolean {
 
 /**
  * Converts a type expression into string.
- * @param {SubstExpr} expr - A type expression.
+ * @param {TypeExpr} expr - A type expression.
  * @returns {string} The textual representation of `expr`.
  */
-function showType (expr: SubstExpr): string {
+function showType (expr: TypeExpr): string {
   switch (expr.type) {
     case TypeVariant.Term: return eType[expr.variant]
     case TypeVariant.Var: return "'" + expr.name
@@ -86,10 +86,10 @@ function showType (expr: SubstExpr): string {
  * @param str The string representation of the type.
  * @returns Either a type term or a type variable based on `str`.
  */
-function stringToType (str: string): SubstExpr {
+function stringToType (str: string): TypeExpr {
   if (str === 'int') return int
   if (str === 'bool') return bool
-  if (str[0] === "'") return new SubstTypeVar(str.slice(1))
+  if (str[0] === "'") return new TypeVar(str.slice(1))
 
   throw new Error("Cannot turn '" + str + "' into a type.")
 }
@@ -100,10 +100,10 @@ function stringToType (str: string): SubstExpr {
  * @param array An array of strings, that can be converted to types.
  * @returns An arrow type constructed from `array`.
  */
-function arrayToArrow (array: string[]): SubstArrow {
+function arrayToArrow (array: string[]): TypeArrow {
   return array
     .map(stringToType)
-    .reduceRight((acc, type) => new SubstArrow(type, acc)) as SubstArrow
+    .reduceRight((acc, type) => new TypeArrow(type, acc)) as TypeArrow
 }
 
 /**
@@ -112,7 +112,7 @@ function arrayToArrow (array: string[]): SubstArrow {
  * @param str The string representation of a simple or arrow type.
  * @returns The type described by `str`.
  */
-function parseType (str: string): SubstExpr {
+function parseType (str: string): TypeExpr {
   const arr = str.split(' => ')
 
   if (str.length === 0 || arr.length === 0) {
@@ -127,5 +127,5 @@ function parseType (str: string): SubstExpr {
 export {
   compare, eType, showType,
   int, bool, parseType, TypeVariant,
-  SubstArrow, type SubstExpr, SubstScheme, SubstTypeVar, SubstTerm
+  TypeArrow, type TypeExpr, TypeScheme, TypeVar, TypeTerm
 }
