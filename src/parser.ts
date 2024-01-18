@@ -1,5 +1,14 @@
 import { AstLet, AstIf, AstFun, AstApply, AstVar, type AstExpr, AstConst } from './ast.ts'
 
+/* This class is a bog-standard parser that can parse strings into ASTs. I
+mostly just wrote it, because I found it really tedious to enter examples using
+class constructors and such, but it has nothing to do with the HM system
+otherwise.
+
+I guess if you have never seen a recursive-descent parser before, this might be
+of some interest, but otherwise you'll not find much new here. For this reason
+the code here is left uncommented. */
+
 export default class Parser {
   index: number
 

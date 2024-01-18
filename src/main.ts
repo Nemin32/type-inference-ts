@@ -1,17 +1,15 @@
-import { type AstExpr, showAST, AstApply, AstConst, AstFun, AstLet, AstVar } from './ast.ts'
+import { type AstExpr, showAST } from './ast.ts'
 import { type Binding, infer, finalize } from './inference.ts'
 import Parser from './parser.ts'
 import { showType, parseType } from './types.ts'
 import { unify } from './unification.ts'
 
-/* const constraints: Constraint[] = [
-  [parseType('int => int => int'), parseType("int => 'a => int")],
-  [makeTypeVar('a'), int]
-] */
-
-// console.log(constraints.map(([lhs,rhs]) => `${showType(lhs)} = ${showType(rhs)}`))
-// unify(constraints)
-
+/**
+ * Given an input and a static environemnt, the code calls the appropriate
+ * functions to infer the type of input and print the internals of the process.
+ * @param bindings A static environment we want to feed to HM.
+ * @param input Either an AST or a string to be parsed into an AST.
+ */
 function run (bindings: Binding[], input: string | AstExpr): void {
   const expression = (typeof input === 'string')
     ? new Parser(input).parse()
@@ -40,9 +38,17 @@ function run (bindings: Binding[], input: string | AstExpr): void {
   console.log('\nFinal type: ' + showType(finalType))
 }
 
-// run([], fun("a", consta(5)))
+// Here's a small example if you want to manually unify some constraints.
+/* const constraints: Constraint[] = [
+  [parseType('int => int => int'), parseType("int => 'a => int")],
+  [makeTypeVar('a'), int]
+] */
 
-// fun f -> fun x -> f(x + 1)
+// console.log(constraints.map(([lhs,rhs]) => `${showType(lhs)} = ${showType(rhs)}`))
+// unify(constraints)
+
+// Hey, this one should be familiar!
+// fun f -> fun x -> f(x + 1) end end
 /* const ast =
 make_fun(make_var('f'),
   make_fun(make_var('x'),
@@ -50,20 +56,16 @@ make_fun(make_var('f'),
       make_apply(make_apply(make_var('+'), make_var('x')),
         make_const(1))))) */
 
-const ast2 =
-new AstLet(new AstVar('id'), new AstFun(new AstVar('x'), new AstVar('x')),
-  new AstLet(new AstVar('a'), new AstApply(new AstVar('id'), new AstConst(5)),
-    new AstApply(new AstVar('id'), new AstConst(true))))
-
+// A really minimal static environment, containing only three operators.
+// You could add here any kind of type really with any name.
 const staticEnv: Binding[] = [
   ['+', parseType('int => int => int')],
   ['*', parseType('int => int => int')],
   ['<=', parseType('int => int => bool')]
 ]
 
-run(staticEnv, ast2)
-
-/* run(staticEnv, `
+// Let-polymorphism just works.
+run(staticEnv, `
   let
     id = fun x -> x end
   in
@@ -72,4 +74,4 @@ run(staticEnv, ast2)
     in
       id(5)
     end
-  end`) */
+  end`)
