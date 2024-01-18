@@ -769,7 +769,7 @@ Végül elmentjük a behelyettesítést a végeredmény halmazunkba:
 * `(int => 'd) / 'c`
 
 Most pedig a 3. szabályt kell alkalmaznunk. Emlékezzünk, hogy `t1 => t2 => t3`
-értelmezhető `t1 => (t2 => t3)`-ként. Így értelmezve a harmadik egyenletet,
+felfogható `t1 => (t2 => t3)`-ként. Így értelmezve a harmadik egyenletet,
 bontsuk ketté!
 
 * `int = 'b`
@@ -980,7 +980,7 @@ Ha négy-öt mellékes szállal is, de az elméleti rész végre befejeződött.
 az algoritmus megértésének elősegítésére írtam TypeScriptben egy egyszerű 
 megvalósítást, mely erősen kikommentelve megtalálható a repó `src` mappájában. 
 Ha esetleg bármi nem lenne tiszta a leírásomból, remélhetőleg a kódot olvasva
-tisztává válnak a dolgok.
+eloszlik a köd.
 
 ### Összefoglalás
 
