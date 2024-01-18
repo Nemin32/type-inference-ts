@@ -61,7 +61,9 @@ const staticEnv: Binding[] = [
   ['<=', parseType('int => int => bool')]
 ]
 
-run(staticEnv, ast2)
+run(staticEnv, `
+fun f -> fun x -> f(+(x)(1)) end end
+`)
 
 /* run(staticEnv, `
   let

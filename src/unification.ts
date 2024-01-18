@@ -1,4 +1,4 @@
-import { makeArrow, compare, makeScheme, showType, type SubstExpr, type SubstTypeVar, TypeVariant } from './types.ts'
+import { SubstArrow, SubstScheme, compare, showType, type SubstExpr, type SubstTypeVar, TypeVariant } from './types.ts'
 
 // A Constraint is a pair of two type expressions in the form of expr1 = expr2
 // This is how we encode information about our types. For instance, if we have
@@ -33,14 +33,14 @@ function substitute (
 
       // In arrows we simply recurse into its left and right side,
       // propaganting the changes until we reach a base type (`term` or `var`).
-    case TypeVariant.Arrow: return makeArrow(
+    case TypeVariant.Arrow: return new SubstArrow(
       substitute(variable, substitution, expr.left),
       substitute(variable, substitution, expr.right)
     )
 
       // With type schemes, we leave the type variable alone
       // and only substitute in the body.
-    case TypeVariant.Scheme: return makeScheme(
+    case TypeVariant.Scheme: return new SubstScheme(
       expr.typeVars,
       substitute(variable, substitution, expr.value)
     )
