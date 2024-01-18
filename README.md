@@ -44,34 +44,34 @@ maximum egy fokkal odább rúgtam.
 
 ...legalábbis valamennyire. Bevallom a téma amiről itt beszélni fogok nagyon is 
 akadémikus. Ha az ember felmerészkedik a cikk témájához kapcsolódó egyik 
-leghíresebb algoritmus Wikipédia oldalára, akkor azon túl, hogy olyan 
+leghíresebb algoritmus [Wikipédia oldalára], akkor azon túl, hogy olyan 
 hieroglifákat lát, amiknek értelmezéséhez ~~ember legyen a talpán~~ elég szilárd 
 alap kell típus-elméletből, még csomó programozásban megőszült tudós neve is 
 felmerül.
 
 Épp emiatt először is le szeretném szögezni, hogy ez a cikk okkal lett úgy
-címezve, hogy "tanuljuk meg együtt" és nem úgy, hogy "most megtanítom". Bsc
-szakdolgozatom keretében egy programozási nyelvet írtam, így a téma hamar
+címezve, hogy "tanuljuk meg együtt" és nem úgy, hogy "most megtanítom". Bár a 
+Bsc szakdolgozatom keretében egy programozási nyelvet írtam, így a téma hamar
 érdekelni kezdett és mondjuk azt, hogy egy-másfél éve foglalkoztat már,
-viszont ez közel nem jelenti azt, hogy a témát mélyen érteném vagy újító 
-gondolatot tudnék fűzni hozzá.
+ez közel nem jelenti azt, hogy a témát mélyen érteném vagy újító gondolatot 
+tudnék fűzni hozzá.
 
 Sőt, a következőkben látható írás nagyrésze egy a Cornell University-n tanító
-professzor, Michael R. Clarkson és társainak munkájára alapul, akik egy [online
-könyvben](https://cs3110.github.io/textbook/cover.html) tették elérhetővé az
+professzor, Michael R. Clarkson és társainak munkájából inspirálódott, 
+helyenként erősen merítkezve, akik egy [online könyvben] tették elérhetővé az
 egyetemen tanított OCaml kurzusuk. Ezen kurzus egyik fejezete éppen az
-interpreterek megalkotásáról szól és ezen belül egy szekció pedig magáról
+értelmező programok megalkotásáról szól és ezen belül egy szekció pedig magáról
 a típuskövetkeztetésről. A cikkem alapját ez a szekció szolgálja, azonban 
-értelemszerűen magyarul meg- és átfogalmazva és OCaml / Pszeudokód helyett 
-TypeScript-ben írt kóddal prezentálva.
+értelemszerűen saját verziómban az ott található gondolatok magyarul lett meg- 
+és átfogalmazva, és OCaml helyett TypeScript-ben írt kóddal lett prezentálva.
 
 Nem akarom túldramatizálni a dolgot, de a könyv számomra abszolút 
 szemléletformáló volt a típusellenőrzés és -következtetés témaköreivel 
 kapcsolatban. Mr Clarkson homályos elméleti módszerek és szabályok helyett 
-tiszta, könnyen követhető példákkal demonstrálja a nyelvek interpretációjának
-minden szakaszát, így nagyon bátran ajánlom bárkinek, akit érdekel a téma.
-Azt nem ígérem, hogy rögtön utána képes leszel önálló nyelvet alkotni, de azt
-garantálhatom, hogy sokkal kevésbé lesz innentől "fekete doboz" a 
+tiszta, könnyen követhető példákkal demonstrálja a nyelvek értelmezésének
+minden szakaszát, így nagyon bátran ajánlom bárkinek, akit érdekel a téma. Bár 
+azt nem ígérhetem, hogy rögtön utána képes leszel önálló nyelvet alkotni, de azt 
+garantálhatom, hogy a könyv végeztével sokkal kevésbé lesz "fekete doboz" a 
 fordítóprogram, aminek az egyik végén bemegy a szöveg és a másik végén kijön
 *valami,* amit le tudunk futtatni.
 
@@ -198,7 +198,7 @@ If
 A fordításon és optimalizáláson túl lehetőségünk van a programunk típusok
 szempontjából való helyességét is ellenőrizni. Folytassuk most ezzel.
 
-## Típusellenőrzés
+## Típusellenőrzés — Ez így jó-e?
 
 Mielőtt magával a típuskövetkeztetéssel kezdenénk foglalkozni, nézzük meg előtte
 a kissé kevésbé rejtelmes testvérét, a típusellenőrzést (*type checking*). Ha meg kéne 
@@ -288,7 +288,7 @@ nem kívánunk dolgozni.
 Ugyanakkor nem állt meg itt a tudomány, így végre elérkezhetünk a cikk fő
 témájához, ami nem más mint a...
 
-## Típuskövetkeztetés
+## Típuskövetkeztetés — Hogyan is lenne ez jó?
 
 Míg a típusellenőrzés azt a kérdést válaszolja meg, hogy "az ilyen típusokkal
 ellátott kód helyes-e?", a típuskövetkeztetés (*type inference*) feladata, 
@@ -331,6 +331,11 @@ Ezt tisztázván viszont vágjunk is bele a dolgokba.
 
 ### Elmélet
 
+A következőkben "kézzel" lefuttatom a HM algoritmust egy egyszerű programon,
+leírva annak részeit és, hogy pontosan mi történik.
+
+#### Típusok reprezentációja
+
 Utolsó gyors kitérő mielőtt magával az algoritmussal foglalkoznánk. A cikkben
 az OCaml szakirodalom tradícióit követve a következő módon jelöljük a típusokat:
 
@@ -341,7 +346,8 @@ nyelvekből.
 `'a` / `'b` / `'kiscica` — Az aposztrof és a kisbetűk árulkodnak erről a 
 fajtáról. Ezek az úgynevezett "szabad" típusváltozók. Nem tudjuk pontosan még 
 pontosan milyen konkrét típus fog a helyükre kerülni, de azt igen, hogy valami 
-állni fog itt.
+állni fog itt. A HM egyik alapfeltételezése, hogy tetszőleges számú szabad
+típusváltozót tudunk gyártani.
 
 `t1 => t2` (olvasd "nyíl `t1`-ből `t2`-be") — Akik még nem igazán foglalkoztak 
 funkcionális programozzással most valószínűleg kicsit pislogni fognak. 
@@ -354,7 +360,7 @@ visszaadni."
 
 Például, ha van egy ilyen függvényünk, hogy
 ```
-int duplaz(int x) {
+int dupláz(int x) {
   return x * 2
 }
 ```
@@ -373,7 +379,7 @@ amíg egy végső értéket nem kapunk.
 Példa,
 
 ```
-V tobb_arg(A a, B b, C c) {
+V több_argumentum(A a, B b, C c) {
   return // valami művelet, ami egy V típusú értékhez vezet.
 }
 ```
@@ -389,7 +395,7 @@ Velem vagy még? Remélem. Bár elsőre fölösleges komplikálásnak tűnhet, e
 a fajta reprezentáció nagyban megkönnyíti a függvények típusairól való 
 érvelést, ahogy az majd hamarosan láthatóvá is fog válni.
 
----
+#### Megkötések kigyűjtése
 
 Az algoritmus első lépése, hogy egy adott AST-ről különféle megkötéseket 
 gyűjtünk. Ez önmagában elég homályos lehet, de egy egyszerű példával világossá
@@ -425,7 +431,7 @@ Ennek következménye, hogy mire feldolgoztunk mindent és elértünk ismét a
 gyökérelemhez egy az egész programra konzisztens megkötés-halmazzal fogunk
 rendelkezni.
 
----
+#### Egyesítés és behelyettesítés
 
 Ezt követi a második (és egyben harmadik) lépés, melyek az *egyesítés* és 
 *helyettesítés* lépései. Ezek során a kapott típusmegkötéseket feloldjuk és új,
@@ -451,7 +457,7 @@ C-szerű nyelvben ez a következő lenne:
 
 ```
 ? külső(? f) {
-  ? belső(? x) {
+  return ? belső(? x) {
     return f(x + 1)
   }
 }
@@ -479,17 +485,18 @@ következtetéseket is le lehet vonni.
 
 Ehhez három szabályt alkalmazunk:
 
-1. `X = X`, ahol `X` bármilyen típus (legyen nyil, szabad vagy konkrét változó),
-   szimplán kiiktatásra kerül a halmazból, hisz nem szolgál új információval.
+1. `X = X`, ahol `X` bármilyen típus (legyen nyil, szabad típusváltozó vagy 
+   konkrét típus), szimplán kiiktatásra kerül a halmazból, hisz nem szolgál új 
+   információval.
 
-2. `'a = X` (vagy `X = 'a`) esetén, ahol `'a` tetszőleges szabad változó,
+2. `'a = X` (vagy `X = 'a`) esetén, ahol `'a` tetszőleges szabad típusváltozó,
    a megkötés kiiktatásra kerül a halmazból és a halmaz összes többi elemében
    `'a`-t átírjuk `X`-re. Ez a *behelyettesítés*. **Ezen felül eltároljuk azt**
    **a tényt, hogy `'a = X` a függvény visszatérési értékei között.**
 
 3. `A => B = C => D` megkötés esetén, ahol `A`, `B`, `C` és `D` mind tetszőleges
-   típus melyek nyilakkal vannak összekötve, az egyenlet kiiktatható és helyette
-   két új egyenletet veszünk fel a halmazba a következő alakkal:
+   típusok, melyek nyilakkal vannak összekötve, az egyenlet kiiktatható és 
+   helyette két új egyenletet veszünk fel a halmazba a következő alakkal:
 
      - `A = C`
      - `B = D`
@@ -580,26 +587,80 @@ Ekkor a megkötés halmazunk üres, a végeredmény pedig a következő:
 * `int / 'b`
 * `int / 'd`
 
-Ekkor előszedjük ismét a kimeneti típusunk, mely jelen esetben `'a => 'b => 'e`.
-Itt már nem kell semmiféle eldöntést végeznünk, helyettesítsük csak be sorban
-a végeredmény halmaz elemeit a kimeneti típusra:
+Az algoritmus ezen lépése ekkor véget ér.
+
+#### Végső típus kiszámítása
+
+A végeredmény halmazunk elkészültével előszedjük ismét a kimeneti típusunk, 
+mely jelen esetben `'a => 'b => 'e`. Itt már nem kell semmiféle eldöntést 
+végeznünk, helyettesítsük csak be sorban a végeredmény halmaz elemeit a kimeneti
+típusra. (Emlékeztetőképp a perjel bal oldalán lévő dolgot helyettesítjük be
+a jobboldalira.)
 
 * `d => 'e / 'a` => `'d => 'e => 'b => 'e`
-* `int => 'd / 'c` => `'d => 'e => 'b => 'e`
+* `int => 'd / 'c` => `'d => 'e => 'b => 'e` (nincs `'c`, így változatlan marad)
 * `int / 'b` => `'d => 'e => int => 'e`
 * `int / 'd` => `int => 'e => int => 'e`
 
 Így tehát a végleges kimeneti típusunk: `int => 'e => int => 'e`
 
-Értelmezzük, mit is jelent ez.
+Értelmezzük, mit is jelent ez az által, hogy behelyettesítünk a függvény két
+korábban megadott alakjába:
 
 ```
-fun f ->
-  fun x ->
-    f(x + 1)
+fun f : (int => 'e) ->
+  fun x : int ->
+    f(x + 1) : 'e
   end
 end
 ```
 
+```
+(int => 'e) külső((int => 'e) f) {
+  return 'e belső(int x) {
+    return f(x + 1)
+  }
+}
+```
 
+Tehát, `külső` egy olyan függvény, mely egy `int => 'e` függvényt vár `f`
+paraméterképp és egy másik `int => 'e` függvénnyel (ez lesz `belső`) tér vissza.
+`belső` egy olyan függvény, ami egy `int` vagyis szám paramétert vár `x` néven. 
+Visszatérési értéke `f(x+1)`, ami egy `'e` típusú érték, mivel `f` típusa
+`int => 'e`.
+
+A tanulság, hogy ennyi kódból szimplán nem tudjuk mit is csinál az `f`. Lehet
+hogy valami összehasonlítást végez. Lehet szöveggé alakítja a számot. Egyszerűen
+nincs elég információnk. 
+
+Azonban, megismertük a függvény alakját és azt is tudjuk, hogy mivel 
+megjelenik az összeadásban, `x`-nek muszáj egy számnak lennie és bár `f` 
+kimeneti típusát nem ismerjük, azt tudjuk, hogy a bementi értékének számnak kell
+lennie. A HM varázsa, hogy mindezt úgy végeztük el, hogy fogalmunk sincs mik
+az argumentumok pontos értékei. Ezen kívül az algoritmus azt is garantálja,
+hogy a lehető legáltalánosabb típust adja meg. De mit is értünk legáltalánosabb 
+típus alatt? 
+
+Az előző példánál maradva, a függvény végső típusa lehetett volna akár 
+`int => bool => int => bool`. `'e` egy szabad típusváltozó, így papríon bármit 
+behelyettesíthetnénk a helyére. Ugyanakkor, az ég világon semmi nem köti ki a 
+programban, hogy `f` valóban egy logikai értékkel fog visszatérni. Épp erről 
+koptattam a pennám, hogy szimplán nincs elég információnk arról, hogy tudjuk. 
+
+Ellenpéldaképp viszont, az `'a => 'e => int => 'e` se volna megfelelő 
+visszatérési típus, hisz tudjuk az `x` alapján, hogy `f` bemeneti típusa 
+mindenképp szám.
+
+Tehát a legáltalánosabb típus alatt olyan típust értünk, melynek részei akkor
+és csak akkor vannak konkretizálva, ha elég információval rendelkezünk ehhez.
+
+Ezzel az elméleti rész lényegében befejeződött. Azonban az algoritmus 
+megértésének elősegítésére írtam TypeScriptben egy egyszerű megvalósítást, mely
+erősen kikommentelve megtalálható a repó másik mappájában. Az összefoglalás 
+előtt szeretnék még pár szót szólni erről is.
+
+### Gyakorlat
+
+[Wikipédia oldalára]: https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system
+[online könyvben]: https://cs3110.github.io/textbook/cover.html
 [választ]: https://stackoverflow.com/questions/10462479/what-is-a-fully-type-inferred-language-and-limitations-of-such-language/10470321#10470321
