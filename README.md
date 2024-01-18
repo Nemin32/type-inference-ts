@@ -1,5 +1,19 @@
 # Tanuljuk meg együtt a típuskövetkeztetés alapjait!
 
+A következő cikk a Hindley-Milner típuskövetkeztetés (*type inference*) 
+algoritmus alapjait mutatja be átlagos programozói tudást feltételezve, 
+magyarul. Bevezetésre kerül az algoritmus *miértje* és *hogyanja,* az utóbbi egy 
+elméleti, "papíron, kézzel" és egy gyakorlati (vagyis kód) formában is 
+bemutatásra kerül. A cikk célja, hogy az olvasó a cikk végére több-kevésbé 
+értse, hogy hogyan is működnek az implicit típusosságú nyelvek és szükség esetén
+saját maga is tudja merre induljon el, ha ilyesmit kellene lefejlesztenie.
+
+Ugyanakkor a cikk nem foglalkozik az algoritmus történelmével, se nem 
+matematikai hátterével, mivel ezekhez az író nem ért eléggé és már így is bőven
+hosszúra sikerült ez az iromány.
+
+## Előszó
+
 Kedves olvasó,
 
 Ha valaha is programoztál már egy erősen típusos nyelv modern dialektusában
@@ -7,10 +21,10 @@ bizonyára néha a te idegeidre is ráment, amikor a huszadik
 `FeneHosszúOsztály<KülönlegesElem> fho = new FeneHosszúOsztály<KülönlegesElem>()`
 sort írtad a kódodban, azt kívánva, bárcsak lenne egy rövidebb módszer erre.
 
-És bizonyára azt is tudod, kedves olvasó, hogy van. Legyen az a C++ `auto` 
-kulcsszava, a Java vagy C# `var`-ja, melyek sorra lehetővé teszik, hogy a 
-fordító helyettünk okoskodja ki, hogy pontosan milyen típusú értéket is 
-szeretnénk eltárolni. De, hogy még merészebb példát is mondjak,ott a Rust `let`
+És bizonyára azt is tudod, kedves olvasó, hogy van rövidebb módszer. Legyen az 
+a C++ `auto` kulcsszava, a Java vagy C# `var`-ja, melyek sorra lehetővé teszik,
+hogy a fordító helyettünk okoskodja ki, hogy pontosan milyen típusú értéket is 
+szeretnénk eltárolni. De, hogy még merészebb példát is mondjak, ott a Rust `let`
 kulcsszava is, mely az esetek jelentős részében teljesen boldogan elvan azzal
 az információval, amit ő maga talál ki, nekünk pedig csak olyankor kell
 kisegítenünk, ha valami nagyon nem egyértelmű számára (például, ha szeretnénk
@@ -18,19 +32,20 @@ a `collect()` függvénnyel valamilyen gyűjteménybe szedni egy iterátor eleme
 meg kell adnunk a gyűjtemény típusát, hisz a Rust önmagától nem tudja a 
 szándékunk kitalálni).
 
-Mindez nemhogy egy gyakorlott, de talán még egy kezdő programozót sem lep meg.
-Bár láttam heves vitákat arról, hogy mennyire is biztonságos ezeket a 
-kulcsszavakat alkalmazni, hisz a későbbiekben bezavarhat például refaktorálás
-során, az kétségtelen, hogy kifejezetten kellemes kis kényelmi funkciók.
+Ezen kulcsszavak már évek óta a nyelvek részei, így jelenlétük nemhogy egy 
+gyakorlott, de talán még egy kezdő programozót sem lep meg.  Bár láttam heves 
+vitákat arról, hogy mennyire is biztonságos ezeket a kulcsszavakat alkalmazni, 
+hisz a későbbiekben bezavarhat például refaktorálás során, az kétségtelen, 
+hogy kifejezetten kellemes kis kényelmi funkciók.
 
-Viszont, ami talán sokkal kevésbé nyilvánvaló, hogy hogy a csudába is csinálja
-ezt a fordítóprogram? Hát nem azért vagyunk mi, hogy megmondjuk az egyes elemek
-milyen típusokkal rendelkeznek? Mint kiderült egész ágazatai vannak a
-programozásnak, ahol a válasz az, hogy "Nem! Majd mi megoldjuk." Ezek alatt 
-általában funkcionális nyelveket értünk, azon belül is a Meta Language 
-(ismertebb nevén **ML**) nyelvcsalád, ami talán a leghíresebb arról a 
+Viszont, ami talán sokkal kevésbé nyilvánvaló, az az hogy hogy a csudába is 
+csinálja ezt a fordítóprogram? Hát nem azért vagyunk mi, hogy megmondjuk az 
+egyes elemek milyen típusokkal rendelkeznek? Mint kiderült egész ágazatai 
+vannak a programozásnak, ahol a válasz az, hogy "Nem! Majd mi megoldjuk." 
+Ezek alatt általában funkcionális nyelveket értünk, azon belül is a Meta 
+Language (ismertebb nevén **ML**) nyelvcsalád, ami talán a leghíresebb arról a 
 képességéről, hogy nagyon kevés kivétellel a fordító képes minden függvény és 
-elem értékét önmagától meghatározni.
+elem értékét önmagától meghatározni, nulla programozói segítséggel.
 
 Persze nem ők az egyetlenek, ott a szintén funkcionális Haskell, a TypeScript,
 ami annak ellenére, hogy a JavaScript botrányosan gyenge típusrendszerrel
@@ -38,23 +53,25 @@ rendelkezik meglepően derék módon találja ki mit szeretnénk magától és m
 más egyéb nyelvek tömkelege. De persze ezzel a kérdést nem válaszoltam meg,
 maximum egy fokkal odább rúgtam.
 
-Úgyhogy itt az ideje, hogy felfedjük a fátylat...
+Úgyhogy ne is teketóriázzunk tovább, itt az ideje, hogy felfedjük a fátylat...
 
-## Előszó
+## Ajánlás
 
-...legalábbis valamennyire. Bevallom a téma amiről itt beszélni fogok nagyon is 
+...legalábbis valamennyire. Bevallom, a téma amiről itt beszélni fogok nagyon is 
 akadémikus. Ha az ember felmerészkedik a cikk témájához kapcsolódó egyik 
 leghíresebb algoritmus [Wikipédia oldalára], akkor azon túl, hogy olyan 
 hieroglifákat lát, amiknek értelmezéséhez ~~ember legyen a talpán~~ elég szilárd 
 alap kell típus-elméletből, még csomó programozásban megőszült tudós neve is 
 felmerül.
 
+![A HM algoritmus matematikai alakban felírva.](/hiero.png)
+
 Épp emiatt először is le szeretném szögezni, hogy ez a cikk okkal lett úgy
 címezve, hogy "tanuljuk meg együtt" és nem úgy, hogy "most megtanítom". Bár a 
 Bsc szakdolgozatom keretében egy programozási nyelvet írtam, így a téma hamar
-érdekelni kezdett és mondjuk azt, hogy egy-másfél éve foglalkoztat már,
-ez közel nem jelenti azt, hogy a témát mélyen érteném vagy újító gondolatot 
-tudnék fűzni hozzá.
+érdekelni kezdett és mondjuk azt, hogy egy-másfél éve foglalkoztat már, ez közel 
+nem jelenti azt, hogy a témát mélyen érteném vagy újító gondolatot tudnék fűzni 
+hozzá.
 
 Sőt, a következőkben látható írás nagyrésze egy a Cornell University-n tanító
 professzor, Michael R. Clarkson és társainak munkájából inspirálódott, 
@@ -65,15 +82,15 @@ a típuskövetkeztetésről. A cikkem alapját ez a szekció szolgálja, azonban
 értelemszerűen saját verziómban az ott található gondolatok magyarul lett meg- 
 és átfogalmazva, és OCaml helyett TypeScript-ben írt kóddal lett prezentálva.
 
-Nem akarom túldramatizálni a dolgot, de a könyv számomra abszolút 
-szemléletformáló volt a típusellenőrzés és -következtetés témaköreivel 
-kapcsolatban. Mr Clarkson homályos elméleti módszerek és szabályok helyett 
-tiszta, könnyen követhető példákkal demonstrálja a nyelvek értelmezésének
-minden szakaszát, így nagyon bátran ajánlom bárkinek, akit érdekel a téma. Bár 
-azt nem ígérhetem, hogy rögtön utána képes leszel önálló nyelvet alkotni, de azt 
-garantálhatom, hogy a könyv végeztével sokkal kevésbé lesz "fekete doboz" a 
-fordítóprogram, aminek az egyik végén bemegy a szöveg és a másik végén kijön
-*valami,* amit le tudunk futtatni.
+Nem akarom túldramatizálni a dolgot, de a könyv számomra erősen 
+szemléletformáló volt mind az értelmezők, mind a típusellenőrzés és 
+-következtetés témaköreivel kapcsolatban. Mr Clarkson homályos elméleti 
+módszerek és szabályok helyett tiszta, könnyen követhető példákkal demonstrálja 
+a nyelvek értelmezésének minden szakaszát, így nagyon bátran ajánlom bárkinek, 
+akit érdekel a téma. Bár azt nem ígérhetem, hogy rögtön utána képes leszel 
+önálló nyelvet alkotni, de azt garantálhatom, hogy a könyv végeztével sokkal 
+kevésbé lesz "fekete doboz" a fordítóprogram, aminek az egyik végén bemegy a 
+szöveg és a másik végén kijön *valami,* amit le tudunk futtatni.
 
 És most, hogy remélhetőleg kellőképp levettem magam a kisfelhőről, vágjunk is 
 bele.
@@ -169,7 +186,7 @@ Jelen példánkban a következő elem,
      |-Atom(2)]
 ```
 
-egy az egyben cserélhető lenne az
+egy az egyben cserélhető lenne a
 
 ```
 [Number(10)]
@@ -178,12 +195,12 @@ egy az egyben cserélhető lenne az
 elemmel. De ugyanilyen optimalizáció lehet, ha egy elágazásban be tudjuk 
 bizonyítani, hogy az eldöntés mindig igaz / hamis, így maga az elágazás 
 eltávolítható a programból, annak helyére csupán a megfelelő ágat illesztve
-vissza:
+vissza, ezzel egyszerűbb és rövidebb kódhoz jutva:
 
 ```
 If
 |
-|-Boolean(true)
+|-<Kifejezés mely mindig igaz>
 |
 |-<Igaz ág>
 |
@@ -198,11 +215,11 @@ If
 A fordításon és optimalizáláson túl lehetőségünk van a programunk típusok
 szempontjából való helyességét is ellenőrizni. Folytassuk most ezzel.
 
-## Típusellenőrzés — Ez így jó-e?
+## Típusellenőrzés — "Ez így jó-e?"
 
 Mielőtt magával a típuskövetkeztetéssel kezdenénk foglalkozni, nézzük meg előtte
-a kissé kevésbé rejtelmes testvérét, a típusellenőrzést (*type checking*). Ha meg kéne 
-fogalmaznunk mit is tesz, valahogy így írhatnánk le: 
+a kissé kevésbé rejtelmes testvérét, a típusellenőrzést (*type checking*). Ha 
+meg kéne fogalmaznunk mit is tesz, valahogy így írhatnánk le: 
 
 > "Adott programkód és az ebben található változók és függvényekhez adott 
 > típusok esetén eldönti, hogy ezek a típusok konzisztensek-e a kód által leírt 
@@ -221,8 +238,7 @@ egész folyamat megakad és nem tudunk mit mondani a programunk helyességéről
 
 Mivel a cikk fő témája nem ez, így csak egy rövid informális példát adok
 az algoritmusra. A témában érdekeltek számára ajánlom a fentebb taglalt könyv
-[idevágó 
-fejezetét](https://cs3110.github.io/textbook/chapters/interp/typecheck.html).
+[idevágó fejezetét].
 
 1. Adott számunkra két bemeneti paraméter, `ast` (lásd fentebb) mely tartalmazza 
    a jelenlegi elemét a kódnak, amit ellenőrizni szeretnénk és a második, 
@@ -837,13 +853,111 @@ mindenképp szám.
 Tehát a legáltalánosabb típus alatt olyan típust értünk, melynek részei akkor
 és csak akkor vannak konkretizálva, ha elég információval rendelkezünk ehhez.
 
-Ezzel az elméleti rész lényegében befejeződött. Azonban az algoritmus 
-megértésének elősegítésére írtam TypeScriptben egy egyszerű megvalósítást, mely
-erősen kikommentelve megtalálható a repó másik mappájában. Az összefoglalás 
-előtt szeretnék még pár szót szólni erről is.
+### Let-polimorfizmus
 
-### Gyakorlat
+A figyelmes olvasónak feltűnhet, hogy az eddig tárgyalt nyelvből gyanúsan 
+hiányzik a változók hozzárendelésének lehetősége. De tegyük csak bele a nyelvbe,
+bizonyára semmi gond nem történhet.
+
+Innentől elérhető a `let <változó> = <érték> in <törzs>` konstrukció, ami a
+`<törzs>`-ön belül elérhetővé teszi a `<változó>` változót, `<érték>` értékkel.
+
+```
+let x = 10 + 5 in
+  x : int
+```
+
+Na, minden rendben, nem robbant fel az univerzum. Az algoritmusunk megfelelő 
+típust számol pont mint korábban. Igen ám, de próbáljunk most meg egy különös
+programot:
+
+```
+let id = fun x -> x in
+  let a = id(5) in
+    id(true)
+```
+
+És rögtön lángokban a világ... Ugyanis, hiába jutunk el odáig, hogy az `id` 
+típusa `'a => 'a` (hisz az identitás függvény típustól függően minden értéken 
+működik), amint elérünk az `id(5)` függvényhíváshoz, ez az `'a` konkretizálódik
+`int => int`-re. Így amikor elérünk az `id(true)`-hoz, a típuskövetkeztetés 
+hibába fut, annak ellenére, hogy a két függvényhívás (és a két `'a`) egymástól
+független.
+
+Persze "megoldhatnánk" a problémát azzal, hogy visszagyömöszöljük a 
+változókötést Pandora dobozába, azonban ember legyen a talpán, aki anélkül kíván
+programozni. Ehelyett inkább oldjuk meg az algoritmusban magában, hogy támogassa
+ezt a nyelvi elemet.
+
+Szerencsénkre összesen két változást kell elvégeznünk az algoritmusunkban. 
+Sajnos viszont, ha korábban implementáltuk már a kódként, akkor jó sok helyen
+át kell írni a dolgokat, de épp ez is ennek a cikknek a lényege, hogy ha már én
+egyszer megszenvedtem ezeket a csapdákat, a kedves olvasónak legalább ne 
+kelljen.
+
+De mi is ez a két bűvös változás? Az első, hogy bevezetjük a *típussémák* 
+fogalmát. Egy típusséma a következőképp néz ki: 
+`egy v. több <típusváltozó> . <típus>` 
+
+Olvasata pedig a következő: A `<típus>` típusban található egy vagy több
+`<típusváltozó>` *általános.* Ez annyit jelent, hogy minden alkalommal, amikor
+a típus kiértékelésre kerül, más szabad változó kerül az összes típusváltozó 
+helyére.
+
+A második változtatás elmagyarázásához vegyük példának az `id` függvényt. A 
+típussémák bevezetése után a függvény típusa `'a . 'a => 'a`. A második 
+változatás, hogy mikor újra lekérjük ezt a típust (például a két függvényhívás
+ellenőrzése közben) új, nem-séma(!) típust gyártunk belőle, például 
+`'b => 'b` és `'c => 'c`, majd ezeket egymástól függetlenül használjuk az 
+algoritmus további részeiben.
+
+Ekkor a `'b => 'b`-ből `int => int` lesz, a `'c => 'c`-ből pedig `bool => bool`
+és mindenki boldog.
+
+#### Hol is a HM határa?
+
+Bár tudom, hogy azt ígértem, hogy nem fogok az algoritmus limitációiról 
+beszélni, mégis szeretném gyorsan megemlíteni, hogy immáron, hogy tisztában 
+vagyunk vele, hogyan is működnek a polimorf típusok az algoritmusban, gyorsan
+megemlíteném mi is az amit *nem* tudunk reprezentálni.
+
+Amit eddig láttunk azok úgynevezett egy-rangú polimorf típusok. Ez annyit 
+jelent, hogy az általános típusváltozók (tehát, ami a pont előtt van) a típus 
+legkülső részén állnak és máshol nem is állhatnak.
+
+Ezzel szemben léteznek magasabb-rangú polimorf típusok is, például képzeljünk el
+egy függvényt, mely varázsütésre bármely típusból képes szöveget létrehozni és
+egy másikat, mely az első függvénynek megfelelő paramétert vár és tetszőleges
+típussal tér vissza. Ekkor az első függvény típusa `'a . 'a -> string`, a 
+másodiké pedig `('a . 'a -> string) -> 'b`. Ekkor az általános típusváltozó 
+*nem* kívül áll, hisz a legkülső elem a nyíl, ami összeköti a sémát a `'b`-vel.
+
+Ez pedig sajnos szimplán [nem eldönthető]. Ez persze nem jelenti azt, hogy vége
+a világnak. A Haskell nyelv például támogatja az ilyen típusokat is és mégis
+a HM döcög alatta. Csupán annyit tesz, hogy ilyen esetekben a programozónak is
+kell kicsit güriznie és meg kell adnia az ilyen függvények típusait kézzel.
+
+---
+
+Ha négy-öt mellékes szállal is, de az elméleti rész végre befejeződött. Azonban
+az algoritmus megértésének elősegítésére írtam TypeScriptben egy egyszerű 
+megvalósítást, mely erősen kikommentelve megtalálható a repó `src` mappájában. 
+Ha esetleg bármi nem lenne tiszta a leírásomból, remélhetőleg a kódot olvasva
+tisztává válnak a dolgok.
+
+### Összefoglalás
+
+Köszönöm szépen, hogy elolvastad ezt a kis cikket! Nincs nagy gyakorlatom 
+ilyesmikben, de remélem ennek ellenére nem lett nagyon szedett-vedett. Persze
+kérdéses, hogy a való életben hol hasznos ez a tudás, amit most esetleg itt
+elsajátíthattál és erre őszintén egy vállrándításon és egy "fene tudján" túl
+nagyon hasznos választ nem is tudok adni, de hiszem, hogy érdemes ilyesmikben is
+jártasnak lenni, hisz a programozás nem csak a kenyérkereső corporate mókolásról
+szól, hanem egy nagyon is izgalmas ágazat, ahol az átlag, két lábon járó ember
+is alkothat olyat, ami más számára csak matematikai krikszkraksz.
 
 [Wikipédia oldalára]: https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system
 [online könyvben]: https://cs3110.github.io/textbook/cover.html
+[idevágó fejezetét]: https://cs3110.github.io/textbook/chapters/interp/typecheck.html
 [választ]: https://stackoverflow.com/questions/10462479/what-is-a-fully-type-inferred-language-and-limitations-of-such-language/10470321#10470321
+[nem eldönthető]: https://www.sciencedirect.com/science/article/pii/S0168007298000475
