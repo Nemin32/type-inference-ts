@@ -932,6 +932,12 @@ Olvasata pedig a következő: A `<típus>` típusban található egy vagy több
 a típus kiértékelésre kerül, új szabad változó kerül az összes típusváltozó 
 helyére.
 
+Változókötések esetén a változóhoz kötött érték típusa típussémaként kerül 
+eltárolásra. Fontos, hogy csak azok a típusváltozók válnak általánossá, melyek 
+nem rendelkeznek egyéb megkötésekkel. Ellenkező esetben felülírhatnánk olyan 
+típusokat is, melyek értéke "kívülről" (vagyis a kötésen túlról) származik
+és egyáltalán nem is általános.
+
 A második változtatás elmagyarázásához vegyük példának az `id` függvényt. A 
 típussémák bevezetése után a függvény típusa `'a . 'a => 'a`. És amikor újra 
 lekérjük ezt a típust (például a két függvényhívás ellenőrzése közben) új, 
