@@ -334,6 +334,38 @@ Ezt tisztázván viszont vágjunk is bele a dolgokba.
 A következőkben "kézzel" lefuttatom a HM algoritmust egy egyszerű programon,
 leírva annak részeit és, hogy pontosan mi történik.
 
+Például tegyük fel, hogy a következő függvényt vizsgáljuk:
+
+```
+fun f ->
+  fun x ->
+    f(x + 1)
+  end
+end
+```
+
+Ahogy látható, ez az új nyelv lényegesebben más a C-től megszokottaktól. Csak, 
+hogy mindnyájan ugyanott tartsunk, kiolvasva ez a következő:
+
+> Adott egy függvény `f` argumentummal, mely visszaad egy másik függvényt `x`
+> argumentummal. Ezen belső függvény értéke pedig az `f` meghívva `x+1`-re.
+
+C-szerű nyelvben ez a következő lenne:
+
+```
+? külső(? f) {
+  return ? belső(? x) {
+    return f(x + 1)
+  }
+}
+
+```
+
+Értelemszerűen a dolog pikantériája, hogy a `?`-el jelölt típusokat nem mi 
+szeretnénk kézzel megadni (még akkor is, ha jelen példában nem lenne 
+kifejezetten bonyolult), hanem elvárjuk, hogy majd a gép szépen kisakkozza 
+nekünk.
+
 #### Típusok reprezentációja
 
 Utolsó gyors kitérő mielőtt magával az algoritmussal foglalkoznánk. A cikkben
@@ -431,43 +463,164 @@ Ennek következménye, hogy mire feldolgoztunk mindent és elértünk ismét a
 gyökérelemhez egy az egész programra konzisztens megkötés-halmazzal fogunk
 rendelkezni.
 
+A jelenlegi példánk esetén ez a folyamat a következő volna:
+
+Kiindulási alapunk a teljes kód és egy úgynevezett *statikus környezet,* mely
+feladata, hogy az előre ismert típusokat tartalmazza. Ez jelen esetben, a `+`-t
+jelenti, melynek típusa `int => int => int`, hisz két számot ad össze és egy
+harmadikkal tér vissza. Ezt a következőképp írhatjuk fel:
+
+```
++ : int => int => int |- fun f -> fun x -> f(x + 1) end end
+```
+
+A `|-` jel úgy értelmezendő, hogy "a bal oldalból következik, hogy ...". A
+legkülső elemünk egy függvény, mely argumentumának a típusát még nem ismerjük.
+"Találjunk ki" neki egyet és folytassuk az algoritmust a függvénytörzsben.
+
+```
++ : int => int => int, f : 'a |- fun x -> f(x + 1) end
+```
+
+Ugyanez a történet. Találjunk ki az `x`-nek egy szabad típusváltozót és 
+folytassuk a törzs vizsgálatát.
+
+```
++ : int => int => int, f : 'a, x : 'b |- f(x + 1)
+```
+
+Áhá! Itt már más a helyzet. Egy függvényhívás áll előttünk. Ennek első lépése,
+hogy készítünk egy új típust, mely a függvényhívás végeredménye lesz. 
+
+Ezután megnézzük mi is a függvény, amit meg szeretnénk hívni:
+
+```
++ : int => int => int, f : 'a, x : 'b |- f : 'a -| {}
+```
+
+Benne van a környezetünkben, hogy `f : 'a`, így `'a`-val térünk vissza. Ez még
+semmilyen megkötést nem termelt. Ezt a `-|` jellel jelöljük, mely jelentése
+"a bal oldal a következőhőz vezet ...", a `{}` pedig az üres halmaz jelölése.
+
+Rendben, a függvényünk típusa megvan, most nézzük az argumentumot. Hunyorítsunk 
+picit és fel fog tűnni, hogy az összeadás valójában értelmezhető egy kettős
+függvényhívásnak is. `x + 1 = +(x)(1)`. Vagyis "meghívjuk" az összeadás 
+függvényt először `x`-el, majd `1`-el.
+
+Nos, függvényhívást láttunk már, szóval végezzük el az előző lépéseket:
+
+```
++ : int => int => int, f : 'a, x : 'b |- +(x)
+  + : int => int => int, f : 'a, x : 'b |- + : int => int => int
+  + : int => int => int, f : 'a, x : 'b |- x : 'b
+```
+
+Eddig nagyon semmi érdekest nem láttunk, viszon itt elkezdődik a varázslat. 
+Ugyanis most, hogy már nem tudunk mélyebbre menni (az `1` mellékág, eléréséhez 
+kénytelenek vagyunk visszalépni egyet), a folyamat elkezd visszafesleni és 
+ezáltal meg is születik az első megkötésünk:
+
+```
++ : int => int => int, f : 'a, x : 'b |- +(x) : 'c -| int => int => int = 'b -> 'c
+```
+
+Kitalálunk egy új típusváltozót, jelen esetben `'c`, ez lesz a függvényünk 
+visszatérési értékének típusa, . Mivel a függvény `x` paramétert vár, (mely egy 
+`'b` típusú érték), így ekkor már tudjuk, hogy a függvényünk típusa `'b -> 'c`,
+melynek meg kell egyeznie a függvénytörzs típusával, tehát 
+`int => int => int`-el. Ha ez így rögtön nincs meg, ajánlok eltölteni itt egy 
+percet meggyőződni, hogy logikus, ami történik. Amint ez megvan a többi már 
+majdnem mind gyerekjáték.
+
+Haladjunk tovább, hisz van még egy másik argumentumunk is.
+
+```
++ : int => int => int, f : 'a, x : 'b |- 1 : int
+```
+
+Itt semmi meglepő nem történik. Egyszerű értékek esetén (pl. `1`) a típust 
+önmagából el tudjuk dönteni.
+
+Ismét elértük a legmélyebb pontot, így az algoritmus még egy szintet 
+visszafeslik:
+
+
+```
++ : int => int => int, f : 'a, x : 'b |- +(x)(1) : 'd -| 
+  'c = int -> 'd, 
+  int => int => int = 'b -> 'c
+```
+
+Ez egy másik pont, ami kissé megkavarhatja az embert. Lássuk, miért is
+`'c = int -> 'd` az új megkötésünk. Ez nem mást mond ki mint, hogy a `'c` egy 
+olyan függvény, ami egy `int` argumentum esetén `'d`-t ad vissza.
+
+Győződjünk meg róla, hogy ez valóban így van: 
+
+- A `+(x)` függvény típusa `'c`,
+- az `1` típusa `int`,
+- a teljes függvénytörzs (vagyis `+(x)(1)`) típusa `'d`,
+- tehát, ha egy `'c` típusú függvényre meghívunk egy `int`-et, akkor
+  `'d`-t kapunk.
+- másképp fogalmazva `'c` egy `int -> 'd` típust takar,
+- tehát `'c = int -> 'd`.
+
+A gondolat egyáltalán nem triviális és én is tíz percet szórakoztam vele, hogy
+olyan formában tudjam itt leírni, hogy az remélhetőleg ne zavarja össze a 
+hallgatóságot.
+
+Ha úgy érzed érted, akkor haladjunk is tovább:
+
+```
++ : int => int => int, f : 'a, x : 'b |- f(x + 1) : 'e -|
+  'a = 'd -> 'e
+  'c = int -> 'd, 
+  int => int => int = 'b -> 'c
+```
+
+Csak, hogy biztosra menjünk, hogy megértettük a függvényhívás működését, itt
+van még egyszer levezetve:
+
+- Az `f` függvény típusát még korábban `'a`-nak határoztuk meg,
+- az `x+1` kifejezés típusát most számoltuk ki `'d`-nek,
+- `f(x+1)` típusát most alkottuk meg, ez az `'e`,
+- tehát `'a` olyan függvénytípus, amit egy `'d` típusú értékkel meghívva `'e`-t 
+  kapunk,
+- vagyis `'a = 'd -> 'e`.
+
+```
++ : int => int => int, f : 'a |- fun x -> f(x + 1) end : 'b -> 'e -|
+  'a = 'd -> 'e
+  'c = int -> 'd, 
+  int => int => int = 'b -> 'c
+```
+
+Ekkor új megkötés már nem keletkezik, csupán azt a következtetést vonjuk le, 
+hogy mivel `x` típusa `'b`, a függvénytörzsé pedig `'e`, így az egész függvény
+típusa `'b -> 'e`. A függvényhívások után ez egy kellemesen egyszerű ítélet.
+
+```
++ : int => int => int |- fun f -> fun x -> f(x + 1) end end : 'a -> 'b -> 'e -|
+  'a = 'd -> 'e
+  'c = int -> 'd, 
+  int => int => int = 'b -> 'c
+```
+
+És ezzel megszületett a végső ítélet is: 
+
+Az egész program típusa `'a -> 'b -> 'e`.
+
+A megkötéseink pedig rendre:
+
+-  `'a = 'd -> 'e`
+-  `'c = int -> 'd`
+-  `int => int => int = 'b -> 'c`
+
 #### Egyesítés és behelyettesítés
 
 Ezt követi a második (és egyben harmadik) lépés, melyek az *egyesítés* és 
 *helyettesítés* lépései. Ezek során a kapott típusmegkötéseket feloldjuk és új,
 specifikusabb megkötéseket kapunk.
-
-Például tegyük fel, hogy a következő függvényt vizsgáljuk:
-
-```
-fun f ->
-  fun x ->
-    f(x + 1)
-  end
-end
-```
-
-Ahogy látható, ez az új nyelv lényegesebben más a C-től megszokottaktól. Csak, 
-hogy mindnyájan ugyanott tartsunk, kiolvasva ez a következő:
-
-> Adott egy függvény `f` argumentummal, mely visszaad egy másik függvényt `x`
-> argumentummal. Ezen belső függvény értéke pedig az `f` meghívva `x+1`-re.
-
-C-szerű nyelvben ez a következő lenne:
-
-```
-? külső(? f) {
-  return ? belső(? x) {
-    return f(x + 1)
-  }
-}
-
-```
-
-Értelemszerűen a dolog pikantériája, hogy a `?`-el jelölt típusokat nem mi 
-szeretnénk kézzel megadni (még akkor is, ha jelen példában nem lenne 
-kifejezetten bonyolult), hanem elvárjuk, hogy majd a gép szépen kisakkozza 
-nekünk.
 
 Az algoritmus első lépésének lefutása után a következő megkötéseket kapjuk:
 
