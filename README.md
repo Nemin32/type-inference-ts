@@ -73,9 +73,9 @@ Bsc szakdolgozatom keretében egy programozási nyelvet írtam, így a téma ham
 nem jelenti azt, hogy a témát mélyen érteném vagy újító gondolatot tudnék fűzni 
 hozzá.
 
-Sőt, a következőkben látható írás nagyrésze egy a Cornell University-n tanító
-professzor, Michael R. Clarkson és társainak munkájából inspirálódott, 
-helyenként erősen merítkezve, akik egy [online könyvben] tették elérhetővé az
+Sőt, a következőkben látható írás jelentős része egy a Cornell University-n 
+tanító professzor, Michael R. Clarkson és társainak munkájából inspirálódott, 
+helyenként erősen merítve abból, akik egy [online könyvben] tették elérhetővé az
 egyetemen tanított OCaml kurzusuk. Ezen kurzus egyik fejezete éppen az
 értelmező programok megalkotásáról szól és ezen belül egy szekció pedig magáról
 a típuskövetkeztetésről. A cikkem alapját ez a szekció szolgálja, azonban 
@@ -92,7 +92,7 @@ akit érdekel a téma. Bár azt nem ígérhetem, hogy rögtön utána képes les
 kevésbé lesz "fekete doboz" a fordítóprogram, aminek az egyik végén bemegy a 
 szöveg és a másik végén kijön *valami,* amit le tudunk futtatni.
 
-És most, hogy remélhetőleg kellőképp levettem magam a kisfelhőről, vágjunk is 
+És most, hogy remélhetőleg kellőképp leemeltem magam a kisfelhőről, vágjunk is 
 bele.
 
 ## Szintaxisfák — Kód, ahogy azt a fordító látja
@@ -102,21 +102,21 @@ Sajnos mielőtt belekezdhetnénk a fő témánkba, muszáj egy apró kitérőt t
 nyugodtan ugorhat is tovább, azonban a többieket marasztalnám, hisz a fogalom
 ismerete nélkül erősen homályos lehet a cikk többi része.
 
-Remélhetőleg, azzal senkinek se mondunk újat, hogy a számítógép (de az annál
-sokkal magasabb szinten működődő interpreterek se) nem nyers szövegek alapján
+Remélhetőleg, azzal senkinek se mondok újat, hogy a számítógép (de az annál
+sokkal magasabb szinten működődő értelmezők se) nem nyers szövegek alapján
 működik. Értelemszerűen, ahhoz hogy eljussunk a felhasználói bemenettől a gépi
-kódig, különféle átalakításokat kell végeznük, ennek a témához legfontosabbb
-állomása pedig az úgynevezett *absztrakt szintaxisfa* ("abstract syntax tree",
-röviden **AST**).
+kódig, különféle átalakításokat kell végeznük, ennek a jelenlegi témához 
+legfontosabbb állomása pedig az úgynevezett *absztrakt szintaxisfa* ("abstract 
+syntax tree", röviden **AST**).
 
-Ez egy fa struktúra, mely az általunk használt nyelv elemeiből épül fel. Célja,
-hogy a struktúrálatlan nyers szövegből egy hierarchikus, a számítógép által
-könnyen feldolgozható adatstruktúra legyen. Ehhez elvetünk minden olyan elemet,
-ami az értelmezéshez nem szükséges (például ilyen az nyelvi elemek közötti 
-üres hely, a fordító számára lényegtelen, hogy "3 + 5"-öt lát vagy 
+Az AST egy fa struktúra, mely az általunk használt nyelv elemeiből épül fel. 
+Célja, hogy a struktúrálatlan nyers szövegből egy hierarchikus, a számítógép 
+által könnyen feldolgozható adatstruktúra legyen. Ehhez elvetünk minden olyan 
+elemet, ami az értelmezéshez nem szükséges (például ilyen az nyelvi elemek 
+közötti üres hely, a fordító számára lényegtelen, hogy "3 + 5"-öt lát vagy 
 "3 +  5"-öt).
 
-Gyakorlati példaképp tegyük fel, hogy egy képzeletbeli C-szerű nyelvben a 
+Gyakorlati példaképp tegyük fel, hogy egy képzeletbeli, C-szerű nyelvben a 
 következő kódot írtuk:
 
 
@@ -170,8 +170,8 @@ elegendő csupán lekövetni a fát és megkeresni azokat az ágakat, ahol
 hozzárendelést végzünk. Ez után az összes gyermek-ágban elérhetőnek tekinthetjük
 ezt a változót, egészen addig, amíg másik ágat nem kezdünk vizsgálni.
 
-Az AST előnye még, hogy a gépi kódra való fordításon túl, a fordító összes 
-fázisa képes dolgozni vele. Például, ha optimalizálni szeretnénk a programunk, 
+Az AST-k előnye még, hogy a gépi kódra való fordításon túl, a fordító összes 
+fázisa képes dolgozni velük. Például, ha optimalizálni szeretnénk a programunk, 
 akkor csak kicserélünk elemeket a fában azok optimálisabb változatára. 
 
 Jelen példánkban a következő elem,
@@ -212,8 +212,10 @@ If
 
 ```
 
-A fordításon és optimalizáláson túl lehetőségünk van a programunk típusok
-szempontjából való helyességét is ellenőrizni. Folytassuk most ezzel.
+A különböző fordítási és optimalizálási módszerekkel könyveket lehetne 
+megtölteni, azonban ez a cikk ezek helyett az AST-k még egy felhasználási 
+módjára fókuszál. Ez pedig nem más, mint a programunk típusok szempontjából való 
+helyességének ellenőrizése. Folytassuk most ezzel.
 
 ## Típusellenőrzés — "Ez így jó-e?"
 
@@ -225,16 +227,17 @@ meg kéne fogalmaznunk mit is tesz, valahogy így írhatnánk le:
 > típusok esetén eldönti, hogy ezek a típusok konzisztensek-e a kód által leírt 
 > folyamattal."
 
-Egyszerűbben fogalmazva, igyekszünk megbizonyosodni afelől, hogy egy számnak
+Faék példával élve, igyekszünk megbizonyosodni afelől, hogy egy számnak 
 deklarált változót ugyan ne adhassunk már egy szöveghez.
 
 A folyamat egyszerűsége és egyben nehézsége, hogy minden típust előre meg kell
-adnunk. Ez persze kedvező számunkra olyan szempontból, hogy az ellenőrző kódja 
-lényegesebben egyszerűbb, hisz nem kell saját magától kitalálni egy-egy érték 
-ugyan mi is lehet (maximum elemei értékeknél, például számok, szövegek, vagy 
-logikai értékek, de ezek eldöntése triviális). Ugyanezen ok miatt, azonban ha 
-az algoritmus valaha olyan értékbe fut, aminek nincs megadott típusa akkor az 
-egész folyamat megakad és nem tudunk mit mondani a programunk helyességéről.
+adnunk az ellenőrző algoritmus számára. Ez persze kedvező számunkra olyan 
+szempontból, hogy az ellenőrző kódja így lényegesebben egyszerűbb, hisz nem kell 
+saját magától kitalálni egy-egy érték ugyan mi is lehet (maximum elemei 
+értékeknél, például számok, szövegek, vagy logikai értékek, de ezek eldöntése 
+triviális). Ugyanezen ok miatt, azonban ha az algoritmus valaha olyan értékbe 
+fut, aminek nincs megadott típusa akkor az egész folyamat megakad és nem tudunk 
+mit mondani a programunk helyességéről.
 
 Mivel a cikk fő témája nem ez, így csak egy rövid informális példát adok
 az algoritmusra. A témában érdekeltek számára ajánlom a fentebb taglalt könyv
@@ -249,22 +252,23 @@ az algoritmusra. A témában érdekeltek számára ajánlom a fentebb taglalt k�
    vagy szöveg), akkor az érték típusa önmagában eldönthető. Minden más 
    ceremónia nélkül ezzel visszatérünk.
 3. Ha viszont nem elemi, akkor nyelvi elemmel van dolgunk, melynek minden
-   variációjára külön eljárást kell alkalmaznunk.
-    - Ha változót találtunk például, akkor meg kell néznünk, hogy találunk-e
+   variációjára külön eljárást kell alkalmaznunk. Például:
+    - Ha változót találtunk, akkor meg kell néznünk, hogy találunk-e
       hozzá tartozó értéket az `env`-ben. Ha igen, akkor visszatérünk ezzel a 
       típussal. Ha pedig nem, akkor kivétel (vagy egyéb hasonló hiba) formájában 
       jelezzük a felhasználó felé, hogy a program nem létező változót kíván 
       használni.
-    - Ellenben, ha például változóhoz értéket szeretnénk rendelni, akkor 
-      megnézzük először, hogy a hozzárendelt érték megfelel-e a 
-      típusellenőrzésnek és, ha igen, akkor eltároljuk mind a változó nevét, 
-      mind az értékének típusát az `env` változóban.
-    - Elágazás esetén megnézzük, hogy a predikátum (a rész, ami `if (<itt>)` 
-      található) logikai érték-e. Hisz, bár a C(++) megengedi, azért mégis egy 
-      eldöntés ne szám vagy szöveg alapon történjen. Ha ez passzol, akkor pedig
-      rekurzívan meghívjuk az ellenőrzést az elágazás összes ágára is. Ekkor 
-      nyelvtől függően lehetőségünk van megengedni vagy nem engedni meg, hogy a 
-      különféle ágak más-más típusokkal térhessenek vissza.
+    - Ha változóhoz értéket szeretnénk rendelni, akkor megnézzük először, 
+      hogy a hozzárendelt érték megfelel-e a típusellenőrzésnek és, ha igen, 
+      akkor eltároljuk mind a változó nevét, mind az értékének típusát az `env` 
+      változóban.
+    - Elágazás esetén az algoritmus rekurzív meghívásával megnézzük, hogy a 
+      predikátum (a rész, ami `if (<itt>)` található) logikai érték-e. Hisz, 
+      bár a C(++) megengedi, azért mégis egy eldöntés ne szám vagy szöveg alapon 
+      történjen. Ha ez passzol, akkor pedig szintén meghívjuk az ellenőrzést az 
+      elágazás összes ágára is. Ekkor nyelvtől függően lehetőségünk van 
+      megengedni vagy nem engedni meg, hogy a különféle ágak más-más 
+      típusokkal térhessenek vissza.
     - For-ciklus esetén annyival izgalmasabb a helyzet, hogy mielőtt 
       ellenőriznénk a ciklus törzsét, előtte az `env` változóba be kell 
       helyeznünk a ciklusváltozó értékét is. Tehát például:
@@ -296,30 +300,32 @@ az algoritmusra. A témában érdekeltek számára ajánlom a fentebb taglalt k�
    megadott típusokkal, így legalábbis elméleti síkon értelmes eredményt kell,
    hogy kapjunk.
 
-Ha egy egyszerű (persze relatívan szólva) statikusan típusos nyelvet írunk, 
-akkor ennyivel akár meg is elégedhetnénk. Legyen a felhasználó gondja-baja, 
-hogy a típusokat szolgáltatja, mi kegyesen ellenőrizzük ezt neki, de helyette 
-nem kívánunk dolgozni.
+Ha egy egyszerű, statikusan típusos nyelvet írunk, akkor ennyivel akár meg is 
+elégedhetnénk. Legyen a felhasználó gondja-baja, hogy a típusokat szolgáltatja, 
+mi kegyesen ellenőrizzük ezt neki, de helyette nem kívánunk dolgozni.
 
 Ugyanakkor nem állt meg itt a tudomány, így végre elérkezhetünk a cikk fő
 témájához, ami nem más mint a...
 
-## Típuskövetkeztetés — Hogyan is lenne ez jó?
+## Típuskövetkeztetés — "Hogyan is lenne ez jó?"
 
 Míg a típusellenőrzés azt a kérdést válaszolja meg, hogy "az ilyen típusokkal
 ellátott kód helyes-e?", a típuskövetkeztetés (*type inference*) feladata, 
-hogy megmondja adott kód esetén, hogy létezik-e egyáltalán helyes típusozás 
-hozzá és, ha igen, mi is pontosan az.
+hogy, 
 
-Remélem azért érződik, hogy itt egy lépéssel elrugaszkodottabb dologról van szó.
-Itt ugyanis már nem meglévő információt akarunk a géppel ellenőriztetni, hanem
-bizonyos szabályrendszerek alapján úgy információt akarunk generáltatni.
+>"Adott kód esetén lehetséges-e egyáltalán minden értékhez konzisztens típust
+>rendelni és, ha igen, pontosan mik is ezek a típusok."
 
-Akinek ezektől a szavaktól az AI villan az agyába, nyugodtan hesegesse is.
-Szerencsére az itt tárgyalt algoritmus nem csak, hogy nem igényel semmiféle
-neurális mókolást, elég egyszerű ahhoz, hogy némi magyarázattal egy aránylag
-kevés valódi tapasztalattal rendelkező programozó is lekódolja. Én már csak 
-tudom, hisz én magam is az vagyok.
+Remélem azért érződik, hogy itt egy lépéssel elrugaszkodottabb dologról van szó 
+mint az előző szekcióban.  Itt ugyanis már nem meglévő információt akarunk a 
+géppel ellenőriztetni, hanem bizonyos szabályrendszerek alapján úgy információt 
+akarunk generáltatni.
+
+Akinek ezektől a szavaktól az AI villan az agyába, nyugodtan hesegesse is el a 
+gondolatot. Szerencsére az itt tárgyalt algoritmus nem csak, hogy nem igényel
+semmiféle neurális mókolást, elég egyszerű ahhoz, hogy némi magyarázattal egy 
+aránylag kevés valódi tapasztalattal rendelkező programozó is lekódolja. Én már 
+csak tudom, hisz én magam is az vagyok.
 
 Ezen bűvös algoritmus a formális és informális nyelvekben is általában a **HM**
 betűszóval van illetve, mely az algoritmus két egymástól független 
@@ -334,23 +340,24 @@ mindenütt használva?"
 
 A kérdés jogos, a válasz pedig kissé lelombozó. A programozói világ nagyjai
 hiába találták ki ezt az őszintén tényleg elképesztő algoritmust, sajnos azt is
-bebizonyították, hogy vannak nyelvek, amelyekben a típusok szimplán 
+bebizonyították, hogy vannak nyelvek és programok, amelyekben a típusok szimplán 
 kikövetkeztethetlenek. Hogy ezek pontosan milyen nyelvek, azt itt most nem
 részletezném (ez a cikk az algoritmus terjesztésére íródott, nem szidalmazására
 :)), legyen annyi elég, hogy például olyan függvények, mint a C `printf`-je, ami 
 tetszőleges számú és tetszőleges típusú argumentumot fogad nem következtethő ki
-algoritmikus úton. Azonban akit még ennél is jobban érdekel a kérdés, ajánlom 
-nézze meg ezt a StackOverflow-os [választ], melyben a kommentelő részletesen 
-kivesézi miért is nincs ingyen ebéd.
+algoritmikus úton. Akit még ennél is jobban érdekel a kérdés, ajánlom nézze meg 
+ezt a StackOverflow-os [választ], melyben a kommentelő részletesen kivesézi 
+miért is nincs ingyen ebéd.
 
 Ezt tisztázván viszont vágjunk is bele a dolgokba. 
 
 ### Elmélet
 
 A következőkben "kézzel" lefuttatom a HM algoritmust egy egyszerű programon,
-leírva annak részeit és, hogy pontosan mi történik.
+leírva annak részeit és hogy pontosan mi is történik az egyes lépéseknél.
 
-Például tegyük fel, hogy a következő függvényt vizsgáljuk:
+A továbbiakban a következő OCaml-szerű pszeudokódban írt programot fogjuk 
+vizsgálni:
 
 ```
 fun f ->
@@ -360,8 +367,9 @@ fun f ->
 end
 ```
 
-Ahogy látható, ez az új nyelv lényegesebben más a C-től megszokottaktól. Csak, 
-hogy mindnyájan ugyanott tartsunk, kiolvasva ez a következő:
+Ahogy látható, ez az új nyelv lényegesebben más a C-től megszokottaktól. 
+Remélhetőleg aránylag egyértelmű mi is az kód jelentése, de hogy mindnyájan 
+ugyanott tartsunk, kiolvasva ez a következő:
 
 > Adott egy függvény `f` argumentummal, mely visszaad egy másik függvényt `x`
 > argumentummal. Ezen belső függvény értéke pedig az `f` meghívva `x+1`-re.
@@ -378,8 +386,8 @@ C-szerű nyelvben ez a következő lenne:
 ```
 
 Értelemszerűen a dolog pikantériája, hogy a `?`-el jelölt típusokat nem mi 
-szeretnénk kézzel megadni (még akkor is, ha jelen példában nem lenne 
-kifejezetten bonyolult), hanem elvárjuk, hogy majd a gép szépen kisakkozza 
+szeretnénk kézzel megadni (még akkor se, ha ez a jelen példában nem lenne 
+kifejezetten bonyolult), hanem elvárjuk, hogy a gép majd szépen kisakkozza 
 nekünk.
 
 #### Típusok reprezentációja
@@ -387,15 +395,14 @@ nekünk.
 Utolsó gyors kitérő mielőtt magával az algoritmussal foglalkoznánk. A cikkben
 az OCaml szakirodalom tradícióit követve a következő módon jelöljük a típusokat:
 
-`szám` / `logikai` / `szöveg` — Egyszerű, konkrét típusok. Megfeleltethetőek
-az `int`, `bool`, `string`, stb. típusoknak a megszokott programozási 
-nyelvekből.
+`int` / `bool` — Egyszerű, konkrét típusok. Megfeleltethetőek a megszokott, 
+C-szerű programozási nyelvekből ismert típusoknak.
 
 `'a` / `'b` / `'kiscica` — Az aposztrof és a kisbetűk árulkodnak erről a 
-fajtáról. Ezek az úgynevezett "szabad" típusváltozók. Nem tudjuk pontosan még 
-pontosan milyen konkrét típus fog a helyükre kerülni, de azt igen, hogy valami 
-állni fog itt. A HM egyik alapfeltételezése, hogy tetszőleges számú szabad
-típusváltozót tudunk gyártani.
+fajtáról. Ezek az úgynevezett "szabad" típusváltozók. A "szabadságot" itt úgy 
+értjük, hogy nem tudjuk pontosan még pontosan milyen konkrét típus fog a változó
+helyére kerülni, de azt igen, hogy valami állni fog itt. A HM egyik 
+alapfeltételezése, hogy tetszőleges számú szabad típusváltozót tudunk gyártani.
 
 `t1 => t2` (olvasd "nyíl `t1`-ből `t2`-be") — Akik még nem igazán foglalkoztak 
 funkcionális programozzással most valószínűleg kicsit pislogni fognak. 
@@ -406,15 +413,16 @@ rendszer. Működésében hasonlít a matematikában megszokott
 legegyszerűbb úgy felfogni, hogy "ha egy `t1`-et kapok, egy `t2`-t fogok 
 visszaadni."
 
-Például, ha van egy ilyen függvényünk, hogy
+Például, a következő függvény
+
 ```
 int dupláz(int x) {
   return x * 2
 }
 ```
 
-akkor a típusunk `int => int`, hisz egy szám bemenetet vár, melyre egy másik 
-számot ad kimenetként. Ahogy látható az argumentum vagy a függvény neve a
+típusa `int => int` volna, hisz egy szám bemenetet vár, melyre egy 
+másik számot ad kimenetként. Ahogy látható az argumentum vagy a függvény neve a
 típus szempontjából irreleváns, így nem jelenik meg.
 
 Ez eddig remélhetőleg triviális. De mi történik akkor, ha egy függvény több
@@ -449,8 +457,8 @@ Az algoritmus első lépése, hogy egy adott AST-ről különféle **megkötése
 gyűjtünk. Ez önmagában elég homályos lehet, de egy egyszerű példával világossá
 fog válni. Tegyük fel van egy ilyen egyenletünk: `a = x + 5`, ebből két 
 megkötést is le tudunk vonni. Mivel tudjuk, hogy az összeadás számokon operál
-így az garantált, hogy `x = szám`. És mivel azt is tudjuk, hogy egy összeadás
-végeredménye szintén szám, így azt is tudjuk, hogy `a = szám`.
+így az garantált, hogy `x = int`. És mivel azt is tudjuk, hogy egy összeadás
+végeredménye szintén szám, így azt is tudjuk, hogy `a = int`.
 
 Tehát a megkötés egy olyan egyenlet, melynek bal és jobboldalán is egy-egy típus
 áll, melyeket egyenlőnek tekintünk.
@@ -468,7 +476,7 @@ if (pred) {
 
 akkor a következő megkötéseket vonhatjuk le:
 
-* `pred = logikai`
+* `pred = bool`
 * `az egész if = 't`
 * `HM(<igaz ág>) = 't`
 * `HM(<hamis ág>) = 't`
@@ -482,27 +490,40 @@ Ennek következménye, hogy mire feldolgoztunk mindent és elértünk ismét a
 gyökérelemhez egy az egész programra konzisztens megkötés-halmazzal fogunk
 rendelkezni.
 
-A jelenlegi példánk esetén ez a folyamat a következő volna:
+---
+
+A jelenlegi példánk esetén ez a folyamat a következőképp néz ki:
 
 Kiindulási alapunk a teljes kód és egy úgynevezett *statikus környezet,* mely
-feladata, hogy az előre ismert típusokat tartalmazza. Ez jelen esetben, a `+`-t
-jelenti, melynek típusa `int => int => int`, hisz két számot ad össze és egy
-harmadikkal tér vissza. Ezt a következőképp írhatjuk fel:
+többé-kevésbé ugyanazt a feladatot tölti be, mint a típusellenőrzésnél is 
+emlegetett környezet, azonban ahelyett, hogy az összes típust tartalmazná már az
+algoritmus futásának kezdetekor, csak azokat tartalmazza, amiket a nyelv 
+készítői előre beprogramoztak.
+
+Ez jelen esetben, a `+`-t jelenti, melynek típusa `int => int => int`, hisz két 
+számot ad össze és egy harmadikkal tér vissza. 
+
+A kezdeti állapotunk a következőképp írhatjuk fel:
 
 ```
 + : int => int => int |- fun f -> fun x -> f(x + 1) end end
 ```
 
-A `|-` jel úgy értelmezendő, hogy "a bal oldalból következik, hogy ...". A
-legkülső elemünk egy függvény, mely argumentumának a típusát még nem ismerjük.
-"Találjunk ki" neki egyet és folytassuk az algoritmust a függvénytörzsben.
+A `|-` jel elé helyezzük az eddig ismert típusaink, mely kezdetben csupán a 
+statikus környezetből (vagyis jelen esetben az összeadás műveletből) áll. A jel 
+maga úgy értelmezendő, hogy "a bal oldalból következik, hogy ...". 
+
+A jeltől jobbra található az éppen feldolgozandó nyelvi elem, mely az algoritmus
+kezdetekor egy függvény. Ezen függvény `f` argumentumának típusát még nem 
+ismerjük. Generáljunk neki egyet és folytassuk az algoritmust a függvény
+törzsén belül.
 
 ```
 + : int => int => int, f : 'a |- fun x -> f(x + 1) end
 ```
 
-Ugyanez a történet. Találjunk ki az `x`-nek egy szabad típusváltozót és 
-folytassuk a törzs vizsgálatát.
+Ugyanez a történet. Generáljunk az `x`-nek egy szabad típusváltozót és 
+folytassuk a második függvény törzsének vizsgálatát.
 
 ```
 + : int => int => int, f : 'a, x : 'b |- f(x + 1)
@@ -543,7 +564,7 @@ ezáltal meg is születik az első megkötésünk:
   int => int => int = 'b => 'c
 ```
 
-Kitalálunk egy új típusváltozót, jelen esetben `'c`, ez lesz a függvényünk 
+Generálunk egy új típusváltozót, jelen esetben `'c`, ez lesz a függvényünk 
 visszatérési értékének típusa, . Mivel a függvény `x` paramétert vár, (mely egy 
 `'b` típusú érték), így ekkor már tudjuk, hogy a függvényünk típusa `'b => 'c`,
 melynek meg kell egyeznie a függvénytörzs típusával, tehát 
@@ -665,7 +686,8 @@ tudjuk mi a függvényünk típusa! Most mi van?
 Az van, hogy még nem teljesen vagyunk kész. A megkötések kigyűjtésének 
 gyötrelmes folyamatát  az *egyesítés és helyettesítés* lépése követi. Ennek 
 során a kapott típusmegkötéseket feloldjuk és új, specifikusabb megkötéseket 
-kapunk.
+kapunk, melyet végül a vizsgált kód végső típusának meghatározására tudunk majd
+felhasználni.
 
 Ismétlésképp az algoritmus első lépésének lefutása után a következő megkötéseket 
 kaptuk:
@@ -693,8 +715,8 @@ Ehhez három szabályt alkalmazunk megkötéstől függően:
    `'a`-t átírjuk `X`-re. Ez a *behelyettesítés*. **Ezen felül eltároljuk azt**
    **a tényt, hogy `'a = X` a függvény visszatérési értékei között.**
 
-3. `A => B = C => D` megkötés esetén, ahol `A`, `B`, `C` és `D` mind tetszőleges
-   típusok, melyek nyilakkal vannak összekötve, az egyenlet kiiktatható és 
+3. `A => B = C => D` megkötés esetén (ahol `A`, `B`, `C` és `D` mind tetszőleges
+   típusok, melyek nyilakkal vannak összekötve) az egyenlet kiiktatható és 
    helyette két új egyenletet veszünk fel a halmazba a következő alakkal:
 
      - `A = C`
@@ -728,7 +750,7 @@ változik. Megkötéseink a következők:
 
 Végeredmény halmazunk pedig:
 
-* `d => 'e / 'a`
+* `('d => 'e) / 'a`
 
 Itt a perjel csupán annyit jelent, hogy ez már nem feldolgozandó megkötés,
 hanem egy elvégzett behelyettesítés. De lelki szemeid előtt nyugodtan 
@@ -743,8 +765,8 @@ azt átírjuk `int => 'd`-re:
 
 Végül elmentjük a behelyettesítést a végeredmény halmazunkba:
 
-* `d => 'e / 'a`
-* `int => 'd / 'c`
+* `('d => 'e) / 'a`
+* `(int => 'd) / 'c`
 
 Most pedig a 3. szabályt kell alkalmaznunk. Emlékezzünk, hogy `t1 => t2 => t3`
 értelmezhető `t1 => (t2 => t3)`-ként. Így értelmezve a harmadik egyenletet,
@@ -761,8 +783,8 @@ Az így kapott új első egyenlet a 2. szabály triviális alkalmazása:
 
 Végeredmény halmaz:
 
-* `d => 'e / 'a`
-* `int => 'd / 'c`
+* `('d => 'e) / 'a`
+* `(int => 'd) / 'c`
 * `int / 'b`
 
 Ismét egy nyillal van dolgunk. Bontsunk megint.
@@ -772,17 +794,17 @@ Ismét egy nyillal van dolgunk. Bontsunk megint.
 
 (A végeredmény halmaz változatlan.)
 
-Az első egyenletben végre találkozunk az 1.-es szabállyal. Tehát, menjen az első
-egyenlet a fenébe.
+Az első egyenletben végre találkozunk az 1.-es szabállyal. Tehát, minden marad
+változatlan, az első egyenlet meg megy a kukába.
 
 * `int = 'd`
 
-Ez pedig ismét triviális 2. szabály.
+Ez pedig ismét a 2. szabály triviális alkalmazása.
 
 Ekkor a megkötés halmazunk üres, a végeredmény pedig a következő:
 
-* `d => 'e / 'a`
-* `int => 'd / 'c`
+* `('d => 'e) / 'a`
+* `(int => 'd) / 'c`
 * `int / 'b`
 * `int / 'd`
 
@@ -796,12 +818,13 @@ végeznünk, helyettesítsük csak be sorban a végeredmény halmaz elemeit a ki
 típusra. (Emlékeztetőképp a perjel bal oldalán lévő dolgot helyettesítjük be
 a jobboldalira.)
 
-* `d => 'e / 'a` => `'d => 'e => 'b => 'e`
-* `int => 'd / 'c` => `'d => 'e => 'b => 'e` (nincs `'c`, így változatlan marad)
-* `int / 'b` => `'d => 'e => int => 'e`
-* `int / 'd` => `int => 'e => int => 'e`
+* `('d => 'e) / 'a` => `('d => 'e) => 'b => 'e`
+* `(int => 'd) / 'c` => `'d => 'e => 'b => 'e` (nincs `'c`, így változatlan 
+  marad)
+* `int / 'b` => `('d => 'e) => int => 'e`
+* `int / 'd` => `(int => 'e) => int => 'e`
 
-Így tehát a végleges kimeneti típusunk: `int => 'e => int => 'e`
+Így tehát a végleges kimeneti típusunk: `(int => 'e) => int => 'e`
 
 Értelmezzük, mit is jelent ez az által, hogy behelyettesítünk a függvény két
 korábban megadott alakjába:
@@ -825,30 +848,33 @@ end
 Tehát, `külső` egy olyan függvény, mely egy `int => 'e` függvényt vár `f`
 paraméterképp és egy másik `int => 'e` függvénnyel (ez lesz `belső`) tér vissza.
 `belső` egy olyan függvény, ami egy `int` vagyis szám paramétert vár `x` néven. 
-Visszatérési értéke `f(x+1)`, ami egy `'e` típusú érték, mivel `f` típusa
-`int => 'e`.
+Visszatérési értéke `f(x+1)`, ami egy `'e` típusú érték.
 
 A tanulság, hogy ennyi kódból szimplán nem tudjuk mit is csinál az `f`. Lehet
-hogy valami összehasonlítást végez. Lehet szöveggé alakítja a számot. Egyszerűen
-nincs elég információnk. 
+hogy valami összehasonlítást végez. Lehet szöveggé alakítja a számot. Lehet
+formattálja a merevlemezed. Egyszerűen nincs elég információnk. 
 
-Azonban, megismertük a függvény alakját és azt is tudjuk, hogy mivel 
-megjelenik az összeadásban, `x`-nek muszáj egy számnak lennie és bár `f` 
-kimeneti típusát nem ismerjük, azt tudjuk, hogy a bementi értékének számnak kell
-lennie. A HM varázsa, hogy mindezt úgy végeztük el, hogy fogalmunk sincs mik
-az argumentumok pontos értékei. Ezen kívül az algoritmus azt is garantálja,
-hogy a lehető legáltalánosabb típust adja meg. De mit is értünk legáltalánosabb 
-típus alatt? 
+Azonban, ez bőven nem jelenti, hogy nem jutottunk sok hasznos információhoz! 
+Megismertük a függvény alakját és azt is tudjuk, hogy mivel megjelenik az 
+összeadásban, az `x`-nek muszáj egy számnak lennie és bár `f` kimeneti típusát 
+nem ismerjük, azt tudjuk, hogy a bementi értékének számnak kell lennie. 
+
+A HM varázsa, hogy mindezt úgy végeztük el, hogy fogalmunk sincs mik az 
+argumentumok pontos értékei. Ezen kívül az algoritmus azt is garantálja, hogy a 
+lehető legáltalánosabb típust adja meg.
+
+De mit is értünk legáltalánosabb típus alatt? 
 
 Az előző példánál maradva, a függvény végső típusa lehetett volna akár 
-`int => bool => int => bool`. `'e` egy szabad típusváltozó, így papríon bármit 
-behelyettesíthetnénk a helyére. Ugyanakkor, az ég világon semmi nem köti ki a 
-programban, hogy `f` valóban egy logikai értékkel fog visszatérni. Épp erről 
-koptattam a pennám, hogy szimplán nincs elég információnk arról, hogy tudjuk. 
+`(int => bool) => int => bool`. Az `'e` egy szabad típusváltozó, így papríon 
+bármit behelyettesíthetnénk a helyére. Ugyanakkor, az ég világon semmi nem köti 
+ki a programban, hogy `f` valóban egy logikai értékkel fog visszatérni. Épp 
+erről koptattam a pennám, hogy szimplán nincs elég információnk arról, hogy 
+tudjuk. 
 
-Ellenpéldaképp viszont, az `'a => 'e => int => 'e` se volna megfelelő 
-visszatérési típus, hisz tudjuk az `x` alapján, hogy `f` bemeneti típusa 
-mindenképp szám.
+Ugyanakkor a ló másik oldalán is simán leeshetünk. Az `('a => 'e) => int => 'e` 
+se volna megfelelő visszatérési típus, hisz tudjuk az `x` alapján, hogy `f` 
+bemeneti típusa mindenképp szám.
 
 Tehát a legáltalánosabb típus alatt olyan típust értünk, melynek részei akkor
 és csak akkor vannak konkretizálva, ha elég információval rendelkezünk ehhez.
@@ -867,9 +893,9 @@ let x = 10 + 5 in
   x : int
 ```
 
-Na, minden rendben, nem robbant fel az univerzum. Az algoritmusunk megfelelő 
-típust számol pont mint korábban. Igen ám, de próbáljunk most meg egy különös
-programot:
+No, minden rendben, csak nem robbant fel az univerzum. Az algoritmusunk 
+megfelelő típust számol pont mint korábban. Igen ám, de próbáljunk most meg egy
+különös programot, csak a biztonság kedvéért:
 
 ```
 let id = fun x -> x in
@@ -879,63 +905,68 @@ let id = fun x -> x in
 
 És rögtön lángokban a világ... Ugyanis, hiába jutunk el odáig, hogy az `id` 
 típusa `'a => 'a` (hisz az identitás függvény típustól függően minden értéken 
-működik), amint elérünk az `id(5)` függvényhíváshoz, ez az `'a` konkretizálódik
-`int => int`-re. Így amikor elérünk az `id(true)`-hoz, a típuskövetkeztetés 
-hibába fut, annak ellenére, hogy a két függvényhívás (és a két `'a`) egymástól
-független.
+működik), amint elérünk az `id(5)` függvényhíváshoz, az `'a` konkretizálódik
+`int => int`-re. Így amikor az `id(true)` kerül kiértékelésre, a 
+típuskövetkeztetés hibába fut, annak ellenére, hogy a két függvényhívás (és a 
+két `'a`) egymástól független.
 
 Persze "megoldhatnánk" a problémát azzal, hogy visszagyömöszöljük a 
-változókötést Pandora dobozába, azonban ember legyen a talpán, aki anélkül kíván
-programozni. Ehelyett inkább oldjuk meg az algoritmusban magában, hogy támogassa
-ezt a nyelvi elemet.
+változókötést Pandora dobozába. De valljuk be ez nem volna életszerű döntés, 
+hisz nincs ember, aki anélkül kíván programozni. Ehelyett inkább oldjuk meg az 
+algoritmusban magában, hogy támogassa ezt a nyelvi elemet.
 
-Szerencsénkre összesen két változást kell elvégeznünk az algoritmusunkban. 
-Sajnos viszont, ha korábban implementáltuk már a kódként, akkor jó sok helyen
-át kell írni a dolgokat, de épp ez is ennek a cikknek a lényege, hogy ha már én
-egyszer megszenvedtem ezeket a csapdákat, a kedves olvasónak legalább ne 
-kelljen.
+Szerencsénkre összesen két elméleti síkon egyszerű változást kell elvégeznünk az
+algoritmusunkban. Sajnos viszont, ha korábban buzgón nekiláttunk az algoritmus
+implementálásának kód formájában, akkor ezek az "egyszerű" változtatásokhoz jó
+sok helyen át kell írni a dolgokat. De épp ez is ennek a cikknek a lényege, hogy
+ha már én egyszer megszenvedtem ezeket a csapdákat, a kedves olvasónak legalább 
+ne kelljen.
 
-De mi is ez a két bűvös változás? Az első, hogy bevezetjük a *típussémák* 
-fogalmát. Egy típusséma a következőképp néz ki: 
-`egy v. több <típusváltozó> . <típus>` 
+De mi is ez a két bűvös változás? 
+
+Az első, hogy bevezetjük a *típussémák* fogalmát. Egy típusséma a következőképp 
+néz ki: `egy v. több <típusváltozó> . <típus>` 
 
 Olvasata pedig a következő: A `<típus>` típusban található egy vagy több
 `<típusváltozó>` *általános.* Ez annyit jelent, hogy minden alkalommal, amikor
-a típus kiértékelésre kerül, más szabad változó kerül az összes típusváltozó 
+a típus kiértékelésre kerül, új szabad változó kerül az összes típusváltozó 
 helyére.
 
 A második változtatás elmagyarázásához vegyük példának az `id` függvényt. A 
-típussémák bevezetése után a függvény típusa `'a . 'a => 'a`. A második 
-változatás, hogy mikor újra lekérjük ezt a típust (például a két függvényhívás
-ellenőrzése közben) új, nem-séma(!) típust gyártunk belőle, például 
-`'b => 'b` és `'c => 'c`, majd ezeket egymástól függetlenül használjuk az 
-algoritmus további részeiben.
+típussémák bevezetése után a függvény típusa `'a . 'a => 'a`. És amikor újra 
+lekérjük ezt a típust (például a két függvényhívás ellenőrzése közben) új, 
+nem-séma(!) típust gyártunk belőle, például `'b => 'b` és `'c => 'c`, majd 
+ezeket egymástól függetlenül használjuk az algoritmus további részeiben.
 
 Ekkor a `'b => 'b`-ből `int => int` lesz, a `'c => 'c`-ből pedig `bool => bool`
-és mindenki boldog.
+az algoritmus boldogan lefut és mindenki boldog.
 
 #### Hol is a HM határa?
 
 Bár tudom, hogy azt ígértem, hogy nem fogok az algoritmus limitációiról 
 beszélni, mégis szeretném gyorsan megemlíteni, hogy immáron, hogy tisztában 
-vagyunk vele, hogyan is működnek a polimorf típusok az algoritmusban, gyorsan
-megemlíteném mi is az amit *nem* tudunk reprezentálni.
+vagyunk vele, hogyan is működnek a polimorf típusok az algoritmusban, mi is az 
+amit *nem* tudunk reprezentálni.
 
 Amit eddig láttunk azok úgynevezett egy-rangú polimorf típusok. Ez annyit 
 jelent, hogy az általános típusváltozók (tehát, ami a pont előtt van) a típus 
 legkülső részén állnak és máshol nem is állhatnak.
 
-Ezzel szemben léteznek magasabb-rangú polimorf típusok is, például képzeljünk el
-egy függvényt, mely varázsütésre bármely típusból képes szöveget létrehozni és
-egy másikat, mely az első függvénynek megfelelő paramétert vár és tetszőleges
-típussal tér vissza. Ekkor az első függvény típusa `'a . 'a -> string`, a 
-másodiké pedig `('a . 'a -> string) -> 'b`. Ekkor az általános típusváltozó 
-*nem* kívül áll, hisz a legkülső elem a nyíl, ami összeköti a sémát a `'b`-vel.
+Ezzel szemben léteznek magasabb-rangú polimorf típusok is, melyekben az 
+általános típusváltozók valahol a típusban beágyazva jelennek meg. Példaképp 
+képzeljünk el egy függvényt, mely varázsütésre bármely típusból képes szöveget 
+létrehozni és egy másikat, mely az első függvénynek megfelelő paramétert vár és 
+tetszőleges típussal tér vissza. Ekkor az első függvény típusa 
+`'a . 'a -> string`, a másodiké pedig `('a . 'a -> string) -> 'b`. Ekkor az 
+általános típusváltozó *nem* kívül áll, hisz a legkülső elem a nyíl, ami 
+összeköti a sémát a `'b`-vel.
 
-Ez pedig sajnos szimplán [nem eldönthető]. Ez persze nem jelenti azt, hogy vége
-a világnak. A Haskell nyelv például támogatja az ilyen típusokat is és mégis
-a HM döcög alatta. Csupán annyit tesz, hogy ilyen esetekben a programozónak is
-kell kicsit güriznie és meg kell adnia az ilyen függvények típusait kézzel.
+Ez pedig sajnos szimplán [nem eldönthető], így nem hogy a sima HM, de bármilyen
+képzelt vagy valós típuskövetkeztető algoritmus elhasalna rajta. Ez persze nem 
+jelenti azt, hogy vége a világnak. A Haskell nyelv például támogatja az ilyen 
+típusokat is és mégis a HM (kiterjesztett alakja, az ún. [System F]) döcög 
+alatta. Csupán annyit tesz, hogy ilyen esetekben a programozónak is kell kicsit 
+güriznie és meg kell adnia az ilyen függvények típusait kézzel.
 
 ---
 
@@ -948,16 +979,21 @@ tisztává válnak a dolgok.
 ### Összefoglalás
 
 Köszönöm szépen, hogy elolvastad ezt a kis cikket! Nincs nagy gyakorlatom 
-ilyesmikben, de remélem ennek ellenére nem lett nagyon szedett-vedett. Persze
-kérdéses, hogy a való életben hol hasznos ez a tudás, amit most esetleg itt
-elsajátíthattál és erre őszintén egy vállrándításon és egy "fene tudján" túl
+ilyesmikben, de remélem ennek ellenére nem lett nagyon szedett-vedett.
+
+Persze kérdéses, hogy a való életben hol hasznos ez a tudás, amit most esetleg 
+itt elsajátíthattál és erre őszintén egy vállrándításon és egy "fene tudján" túl
 nagyon hasznos választ nem is tudok adni, de hiszem, hogy érdemes ilyesmikben is
 jártasnak lenni, hisz a programozás nem csak a kenyérkereső corporate mókolásról
 szól, hanem egy nagyon is izgalmas ágazat, ahol az átlag, két lábon járó ember
 is alkothat olyat, ami más számára csak matematikai krikszkraksz.
+
+Ha mást nem, remélem legalább egy érdekes olvasmányt nyújtottam a reggeli 
+kávéhoz.
 
 [Wikipédia oldalára]: https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system
 [online könyvben]: https://cs3110.github.io/textbook/cover.html
 [idevágó fejezetét]: https://cs3110.github.io/textbook/chapters/interp/typecheck.html
 [választ]: https://stackoverflow.com/questions/10462479/what-is-a-fully-type-inferred-language-and-limitations-of-such-language/10470321#10470321
 [nem eldönthető]: https://www.sciencedirect.com/science/article/pii/S0168007298000475
+[System F]: https://en.wikipedia.org/wiki/System_F
