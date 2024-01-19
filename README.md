@@ -455,16 +455,17 @@ a fajta reprezentáció nagyban megkönnyíti a függvények típusairól való
 
 Az algoritmus első lépése, hogy egy adott AST-ről különféle **megkötéseket** 
 gyűjtünk. Ez önmagában elég homályos lehet, de egy egyszerű példával világossá
-fog válni. Tegyük fel van egy ilyen egyenletünk: `a = x + 5`, ebből két 
-megkötést is le tudunk vonni. Mivel tudjuk, hogy az összeadás számokon operál
-így az garantált, hogy `x = int`. És mivel azt is tudjuk, hogy egy összeadás
-végeredménye szintén szám, így azt is tudjuk, hogy `a = int`.
+fog válni. Tegyük fel van egy ilyen egyenletünk: `HM(a) = HM(x + 5)`, ahol `HM` 
+tetszőleges nyelvi elemet annak típusához rendel. Ebből két megkötést is le 
+tudunk vonni. Mivel tudjuk, hogy az összeadás számokon operál így az garantált, 
+hogy `HM(x) = int`. És mivel azt is tudjuk, hogy egy összeadás végeredménye 
+szintén szám, így azt is tudjuk, hogy `HM(a) = int`.
 
 Tehát a megkötés egy olyan egyenlet, melynek bal és jobboldalán is egy-egy típus
 áll, melyeket egyenlőnek tekintünk.
 
 Természetesen a különböző nyelvi elemek különböző megkötéseket is vonnak maguk
-után. Például, ha adott
+után. Például, ha adott a következő elágazás
 
 ```
 if (pred) {
@@ -474,13 +475,16 @@ if (pred) {
 }
 ```
 
-akkor a következő megkötéseket vonhatjuk le (itt például, hogy az elágazások
-igaz és hamis ágát is szeretnénk, hogy ugyanaz a típus legyen):
+akkor a következő megkötéseket vonhatjuk le :
 
 * `HM(pred) = bool`
 * `az egész if = 't`
 * `HM(<igaz ág>) = 't`
 * `HM(<hamis ág>) = 't`
+
+(Ezt úgy értelmezzük, hogy az elágazásunk predikátumának logikai értéknek kell
+lennie, a két ágnak pedig ugyanolyan típusúnak, mely végül az egész elágazás
+típusává is válik.)
 
 Fontos megjegyezni, hogy a típusellenőrzésnél emlegetett `env` környezettel 
 ellentétben a megkötések fölfelé terjednek. Ez azt jelenti, hogy ha például
