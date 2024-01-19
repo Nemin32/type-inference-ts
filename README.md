@@ -555,8 +555,8 @@ Nos, függvényhívást láttunk már, szóval végezzük el az előző lépése
 
 ```
 + : int -> int -> int, f : 'a, x : 'b |- +(x)
-  + : int -> int -> int, f : 'a, x : 'b |- + : int -> int -> int
-  + : int -> int -> int, f : 'a, x : 'b |- x : 'b
+  + : int -> int -> int, f : 'a, x : 'b |- + : int -> int -> int -| {}
+  + : int -> int -> int, f : 'a, x : 'b |- x : 'b -| {}
 ```
 
 Eddig nagyon semmi érdekes nem történt, itt azonban elkezdődik a varázslat. 
@@ -570,7 +570,7 @@ ezáltal meg is születik az első megkötésünk:
 ```
 
 Generálunk egy új típusváltozót, jelen esetben `'c`, ez lesz a függvényünk 
-visszatérési értékének típusa, . Mivel a függvény `x` paramétert vár, (mely egy 
+visszatérési értékének típusa. Mivel a függvény `x` paramétert vár, (mely egy 
 `'b` típusú érték), így ekkor már tudjuk, hogy a függvényünk típusa `'b -> 'c`,
 melynek meg kell egyeznie a függvénytörzs típusával, tehát 
 `int -> int -> int`-el. Ha ez így rögtön nincs meg, ajánlok eltölteni itt egy 
@@ -580,13 +580,13 @@ majdnem mind gyerekjáték.
 Haladjunk tovább, hisz van még egy másik argumentumunk is.
 
 ```
-+ : int -> int -> int, f : 'a, x : 'b |- 1 : int
++ : int -> int -> int, f : 'a, x : 'b |- 1 : int -| {}
 ```
 
 Itt semmi meglepő nem történik. Egyszerű értékek esetén (pl. `1`) a típust 
-önmagából el tudjuk dönteni.
+önmagából el tudjuk dönteni, megkötés pedig nem termelődik.
 
-Ismét elértük a legmélyebb pontot, így az algoritmus még egy szintet 
+Megint elértük az AST egyik levél-elemét, így az algoritmus ismét egy szintet 
 visszafeslik:
 
 
@@ -596,25 +596,28 @@ visszafeslik:
   int -> int -> int = 'b -> 'c
 ```
 
-Ez egy másik pont, ami kissé megkavarhatja az embert. Lássuk, miért is
-`'c = int -> 'd` az új megkötésünk. Ez nem mást mond ki mint, hogy egy `'c` 
-típusú függvény egy `int` típusú argumentum esetén `'d` típusú értéket ad 
-vissza.
+Ez egy másik szituáció, ami kissé megkavarhatja az embert. Lássuk, miért is
+`'c = int -> 'd` az új megkötésünk. Ez nem mást mond ki mint:
+
+> "Egy `'c` típusú függvény egy `int` típusú argumentum esetén `'d` típusú 
+> értéket ad vissza."
 
 Győződjünk meg róla, hogy ez valóban így van: 
 
-- A `+(x)` függvény típusa `'c`,
+- A `+(x)` függvény típusát előzőleg `'c`-nek határoztuk meg,
 - az `1` argumentum típusa triviálisan `int`,
 - a teljes függvényhívás (vagyis `+(x)(1)`) típusát tetszőleges alapon `'d`-nek
   kereszteltük,
-- tehát, ha egy `'c` típusú függvényre (`+(x)`) meghívunk egy `int`-et (`1`), 
-  akkor `'d`-t kapunk.
+- tehát, ha egy `'c` típusú függvényre (`+(x)`) meghívunk egy `int` argumentumot
+  (`1`), akkor eredményként egy `'d` típusú értéket kapunk kapunk.
 - másképp fogalmazva `'c` egy `int -> 'd` típust takar,
-- tehát `'c = int -> 'd`.
+- vagyis, megkötésként fogalmazva, `'c = int -> 'd`.
 
 A gondolat egyáltalán nem triviális és én is tíz percet szórakoztam vele, hogy
 olyan formában tudjam itt leírni, hogy az remélhetőleg ne zavarja össze a 
 hallgatóságot.
+
+![](/func_judg.png)
 
 ```
 + : int -> int -> int, f : 'a, x : 'b |- f(x + 1) : 'e -|
