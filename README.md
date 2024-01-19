@@ -206,7 +206,7 @@ If
 |
 |-<Hamis ág>
 
-=>
+->
 
 <Igaz ág>
 
@@ -404,12 +404,12 @@ fajtáról. Ezek az úgynevezett "szabad" típusváltozók. A "szabadságot" itt
 helyére kerülni, de azt igen, hogy valami állni fog itt. A HM egyik 
 alapfeltételezése, hogy tetszőleges számú szabad típusváltozót tudunk gyártani.
 
-`t1 => t2` (olvasd "nyíl `t1`-ből `t2`-be") — Akik még nem igazán foglalkoztak 
+`t1 -> t2` (olvasd "nyíl `t1`-ből `t2`-be") — Akik még nem igazán foglalkoztak 
 funkcionális programozzással most valószínűleg kicsit pislogni fognak. 
 Amikor én először megláttam ezt a jelölést, szintén kissé hüledeztem, 
 hogy "most mi, miért így néz ki?", de valójában egyáltalán nem bonyolult 
 rendszer. Működésében hasonlít a matematikában megszokott 
-`értelmezési tartomány => értékkészlet` kapcsolathoz, azonban a 
+`értelmezési tartomány -> értékkészlet` kapcsolathoz, azonban a 
 legegyszerűbb úgy felfogni, hogy "ha egy `t1`-et kapok, egy `t2`-t fogok 
 visszaadni."
 
@@ -421,7 +421,7 @@ int dupláz(int x) {
 }
 ```
 
-típusa `int => int` volna, hisz egy szám bemenetet vár, melyre egy 
+típusa `int -> int` volna, hisz egy szám bemenetet vár, melyre egy 
 másik számot ad kimenetként. Ahogy látható az argumentum vagy a függvény neve a
 típus szempontjából irreleváns, így nem jelenik meg.
 
@@ -440,8 +440,8 @@ V több_argumentum(A a, B b, C c) {
 }
 ```
 
-Ekkor a függvényünk típusa (vagy szignatúrája) `A => B => C => V`. Ezt úgy
-értelmezzük, mintha a következő zárójelek lennének ott: `A => (B => (C => V))`
+Ekkor a függvényünk típusa (vagy szignatúrája) `A -> B -> C -> V`. Ezt úgy
+értelmezzük, mintha a következő zárójelek lennének ott: `A -> (B -> (C -> V))`
 
 Tehát, egy `A` típusú értéket váró függvény, mely visszaad egy `B` típusú 
 értéket váró függvényt, mely visszaad egy `C` típusú értéket váró függvényt,
@@ -474,9 +474,10 @@ if (pred) {
 }
 ```
 
-akkor a következő megkötéseket vonhatjuk le:
+akkor a következő megkötéseket vonhatjuk le (itt például, hogy az elágazások
+igaz és hamis ágát is szeretnénk, hogy ugyanaz a típus legyen):
 
-* `pred = bool`
+* `HM(pred) = bool`
 * `az egész if = 't`
 * `HM(<igaz ág>) = 't`
 * `HM(<hamis ág>) = 't`
@@ -500,13 +501,13 @@ emlegetett környezet, azonban ahelyett, hogy az összes típust tartalmazná m�
 algoritmus futásának kezdetekor, csak azokat tartalmazza, amiket a nyelv 
 készítői előre beprogramoztak.
 
-Ez jelen esetben, a `+`-t jelenti, melynek típusa `int => int => int`, hisz két 
+Ez jelen esetben, a `+`-t jelenti, melynek típusa `int -> int -> int`, hisz két 
 számot ad össze és egy harmadikkal tér vissza. 
 
 A kezdeti állapotunk a következőképp írhatjuk fel:
 
 ```
-+ : int => int => int |- fun f -> fun x -> f(x + 1) end end
++ : int -> int -> int |- fun f -> fun x -> f(x + 1) end end
 ```
 
 A `|-` jel elé helyezzük az eddig ismert típusaink, mely kezdetben csupán a 
@@ -519,21 +520,21 @@ ismerjük. Generáljunk neki egyet és folytassuk az algoritmust a függvény
 törzsén belül.
 
 ```
-+ : int => int => int, f : 'a |- fun x -> f(x + 1) end
++ : int -> int -> int, f : 'a |- fun x -> f(x + 1) end
 ```
 
 Ugyanez a történet. Generáljunk az `x`-nek egy szabad típusváltozót és 
 folytassuk a második függvény törzsének vizsgálatát.
 
 ```
-+ : int => int => int, f : 'a, x : 'b |- f(x + 1)
++ : int -> int -> int, f : 'a, x : 'b |- f(x + 1)
 ```
 
-Áhá! Itt már más a helyzet. Egy függvényhívás áll előttünk. Elősször is nézzük 
+Áhá! Itt már más a helyzet. Egy függvényhívás áll előttünk. Először is nézzük 
 meg mi is annak a függvénynek a típusa, amit meg szeretnénk hívni:
 
 ```
-+ : int => int => int, f : 'a, x : 'b |- f : 'a -| {}
++ : int -> int -> int, f : 'a, x : 'b |- f : 'a -| {}
 ```
 
 Benne van a környezetünkben, hogy `f : 'a`, így `'a`-val térünk vissza. Ez még
@@ -549,9 +550,9 @@ függvényt először `x`-el, majd az így kapott "függvényt" meghívjuk `1`-e
 Nos, függvényhívást láttunk már, szóval végezzük el az előző lépéseket:
 
 ```
-+ : int => int => int, f : 'a, x : 'b |- +(x)
-  + : int => int => int, f : 'a, x : 'b |- + : int => int => int
-  + : int => int => int, f : 'a, x : 'b |- x : 'b
++ : int -> int -> int, f : 'a, x : 'b |- +(x)
+  + : int -> int -> int, f : 'a, x : 'b |- + : int -> int -> int
+  + : int -> int -> int, f : 'a, x : 'b |- x : 'b
 ```
 
 Eddig nagyon semmi érdekes nem történt, itt azonban elkezdődik a varázslat. 
@@ -560,22 +561,22 @@ kénytelenek vagyunk visszalépni egyet), a folyamat elkezd visszafesleni és
 ezáltal meg is születik az első megkötésünk:
 
 ```
-+ : int => int => int, f : 'a, x : 'b |- +(x) : 'c -| 
-  int => int => int = 'b => 'c
++ : int -> int -> int, f : 'a, x : 'b |- +(x) : 'c -| 
+  int -> int -> int = 'b -> 'c
 ```
 
 Generálunk egy új típusváltozót, jelen esetben `'c`, ez lesz a függvényünk 
 visszatérési értékének típusa, . Mivel a függvény `x` paramétert vár, (mely egy 
-`'b` típusú érték), így ekkor már tudjuk, hogy a függvényünk típusa `'b => 'c`,
+`'b` típusú érték), így ekkor már tudjuk, hogy a függvényünk típusa `'b -> 'c`,
 melynek meg kell egyeznie a függvénytörzs típusával, tehát 
-`int => int => int`-el. Ha ez így rögtön nincs meg, ajánlok eltölteni itt egy 
+`int -> int -> int`-el. Ha ez így rögtön nincs meg, ajánlok eltölteni itt egy 
 percet meggyőződni, hogy logikus, ami történik. Amint ez megvan a többi már 
 majdnem mind gyerekjáték.
 
 Haladjunk tovább, hisz van még egy másik argumentumunk is.
 
 ```
-+ : int => int => int, f : 'a, x : 'b |- 1 : int
++ : int -> int -> int, f : 'a, x : 'b |- 1 : int
 ```
 
 Itt semmi meglepő nem történik. Egyszerű értékek esetén (pl. `1`) a típust 
@@ -586,13 +587,13 @@ visszafeslik:
 
 
 ```
-+ : int => int => int, f : 'a, x : 'b |- +(x)(1) : 'd -| 
-  'c = int => 'd, 
-  int => int => int = 'b => 'c
++ : int -> int -> int, f : 'a, x : 'b |- +(x)(1) : 'd -| 
+  'c = int -> 'd, 
+  int -> int -> int = 'b -> 'c
 ```
 
 Ez egy másik pont, ami kissé megkavarhatja az embert. Lássuk, miért is
-`'c = int => 'd` az új megkötésünk. Ez nem mást mond ki mint, hogy egy `'c` 
+`'c = int -> 'd` az új megkötésünk. Ez nem mást mond ki mint, hogy egy `'c` 
 típusú függvény egy `int` típusú argumentum esetén `'d` típusú értéket ad 
 vissza.
 
@@ -604,18 +605,18 @@ Győződjünk meg róla, hogy ez valóban így van:
   kereszteltük,
 - tehát, ha egy `'c` típusú függvényre (`+(x)`) meghívunk egy `int`-et (`1`), 
   akkor `'d`-t kapunk.
-- másképp fogalmazva `'c` egy `int => 'd` típust takar,
-- tehát `'c = int => 'd`.
+- másképp fogalmazva `'c` egy `int -> 'd` típust takar,
+- tehát `'c = int -> 'd`.
 
 A gondolat egyáltalán nem triviális és én is tíz percet szórakoztam vele, hogy
 olyan formában tudjam itt leírni, hogy az remélhetőleg ne zavarja össze a 
 hallgatóságot.
 
 ```
-+ : int => int => int, f : 'a, x : 'b |- f(x + 1) : 'e -|
-  'a = 'd => 'e
-  'c = int => 'd, 
-  int => int => int = 'b => 'c
++ : int -> int -> int, f : 'a, x : 'b |- f(x + 1) : 'e -|
+  'a = 'd -> 'e
+  'c = int -> 'd, 
+  int -> int -> int = 'b -> 'c
 ```
 
 Csak, hogy biztosra menjünk, hogy megértettük a függvényhívás működését, itt
@@ -626,48 +627,48 @@ van még egyszer levezetve:
 - `f(x+1)` típusát most alkottuk meg, ez az `'e`,
 - tehát `'a` olyan függvénytípus, amit egy `'d` típusú értékkel meghívva `'e`-t 
   kapunk,
-- vagyis `'a = 'd => 'e`.
+- vagyis `'a = 'd -> 'e`.
 
 ```
-+ : int => int => int, f : 'a |- fun x => f(x + 1) end : 'b => 'e -|
-  'a = 'd => 'e
-  'c = int => 'd, 
-  int => int => int = 'b => 'c
++ : int -> int -> int, f : 'a |- fun x -> f(x + 1) end : 'b -> 'e -|
+  'a = 'd -> 'e
+  'c = int -> 'd, 
+  int -> int -> int = 'b -> 'c
 ```
 
 Ekkor új megkötés már nem keletkezik, csupán azt a következtetést vonjuk le, 
 hogy mivel `x` típusa `'b`, a függvénytörzsé pedig `'e`, így az egész függvény
-típusa `'b => 'e`. A függvényhívások után ez egy kellemesen egyszerű ítélet.
+típusa `'b -> 'e`. A függvényhívások után ez egy kellemesen egyszerű ítélet.
 
 ```
-+ : int => int => int |- fun f => fun x => f(x + 1) end end : 'a => 'b => 'e -|
-  'a = 'd => 'e
-  'c = int => 'd, 
-  int => int => int = 'b => 'c
++ : int -> int -> int |- fun f -> fun x -> f(x + 1) end end : 'a -> 'b -> 'e -|
+  'a = 'd -> 'e
+  'c = int -> 'd, 
+  int -> int -> int = 'b -> 'c
 ```
 
 És ezzel megszületett a végső ítélet is: 
 
-Az egész program típusa `'a => 'b => 'e`.
+Az egész program típusa `'a -> 'b -> 'e`.
 
 A megkötéseink pedig rendre:
 
--  `'a = 'd => 'e`
--  `'c = int => 'd`
--  `int => int => int = 'b => 'c`
+-  `'a = 'd -> 'e`
+-  `'c = int -> 'd`
+-  `int -> int -> int = 'b -> 'c`
 
 Csak hogy lássuk mennyire sok munkát is végez helyettünk a gép, itt az egész
 algoritmus, immáron megszakítás nélkül. (A "rövidség" kedvéért az összeadás 
 típusát nem írom ki teljesen, helyette a `'+` típust használom rövidítésként, 
-melyet `int => int => int`-nek olvass.)
+melyet `int -> int -> int`-nek olvass.)
 
 ```
-+ : '+ |- fun f -> fun x -> f(x+1) end end : 'a -> 'b -> 'e -| 'a = 'd => 'e 'c = int => 'd, '+ = 'b => 'c
-  + : '+, f : 'a |- fun x -> f(x+1) end : 'b -> 'e -| 'a = 'd => 'e 'c = int => 'd, '+ = 'b => 'c
-    + : '+, f : 'a, x : 'b |- f(x+1) : 'e -| 'a = 'd => 'e 'c = int => 'd, '+ = 'b => 'c
++ : '+ |- fun f -> fun x -> f(x+1) end end : 'a -> 'b -> 'e -| 'a = 'd -> 'e 'c = int -> 'd, '+ = 'b -> 'c
+  + : '+, f : 'a |- fun x -> f(x+1) end : 'b -> 'e -| 'a = 'd -> 'e 'c = int -> 'd, '+ = 'b -> 'c
+    + : '+, f : 'a, x : 'b |- f(x+1) : 'e -| 'a = 'd -> 'e 'c = int -> 'd, '+ = 'b -> 'c
       + : '+, f : 'a, x : 'b |- f : 'a -| {}
-      + : '+, f : 'a, x : 'b |- +(x)(1) : 'd -| 'c = int -> 'd, '+ = 'b => 'c
-        + : '+, f : 'a, x : 'b |- +(x) : 'c -| '+ = 'b => 'c
+      + : '+, f : 'a, x : 'b |- +(x)(1) : 'd -| 'c = int -> 'd, '+ = 'b -> 'c
+        + : '+, f : 'a, x : 'b |- +(x) : 'c -| '+ = 'b -> 'c
           + : '+, f : 'a, x : 'b |- + : '+ -| {}
           + : '+, f : 'a, x : 'b |- x : 'b -| {}
         + : '+, f : 'a, x : 'b |- 1 : int -| {}
@@ -692,12 +693,12 @@ felhasználni.
 Ismétlésképp az algoritmus első lépésének lefutása után a következő megkötéseket 
 kaptuk:
 
-* `'a = 'd => 'e`
-* `'c = int => 'd `
-* `int => int => int = 'b => 'c`
+* `'a = 'd -> 'e`
+* `'c = int -> 'd `
+* `int -> int -> int = 'b -> 'c`
 
 Ezen felül tudjuk, hogy a függvény végső visszatérési értékének típusa 
-`'a => 'b => 'e`.
+`'a -> 'b -> 'e`.
 
 Ezzel önmagában nem tudunk még sokat kezdeni. Az egyetlen információ, amivel
 ez szolgál, hogy az így kapott végső függvény két értéket vár (melyek típusa
@@ -715,7 +716,7 @@ Ehhez három szabályt alkalmazunk megkötéstől függően:
    `'a`-t átírjuk `X`-re. Ez a *behelyettesítés*. **Ezen felül eltároljuk azt**
    **a tényt, hogy `'a = X` a függvény visszatérési értékei között.**
 
-3. `A => B = C => D` megkötés esetén (ahol `A`, `B`, `C` és `D` mind tetszőleges
+3. `A -> B = C -> D` megkötés esetén (ahol `A`, `B`, `C` és `D` mind tetszőleges
    típusok, melyek nyilakkal vannak összekötve) az egyenlet kiiktatható és 
    helyette két új egyenletet veszünk fel a halmazba a következő alakkal:
 
@@ -734,57 +735,57 @@ megkötéseink vagy egy az egyben kiiktatja őket.
 Visszatérve a példánkhoz, haladjunk sorrendben végig a megkötéseinken (melyeket
 most ismét bemásolok az egyszerűség kedvéért):
 
-* `'a = 'd => 'e`
-* `'c = int => 'd `
-* `int => int => int = 'b => 'c`
+* `'a = 'd -> 'e`
+* `'c = int -> 'd `
+* `int -> int -> int = 'b -> 'c`
 
 Az első `'a = X` alakban van, mely a 2. szabálynak felel meg. Tehát kiiktatjuk
 az egyenletet a halmazból, átírjuk a többi egyenletben található `'a`-t 
-`'d => 'e`-re, majd elmentjük a végeredmény halmazba az eredeti megkötést.
+`'d -> 'e`-re, majd elmentjük a végeredmény halmazba az eredeti megkötést.
 
 Mivel az `'a` semelyik másik megkötésben nem jelenik meg, így sok minden nem 
 változik. Megkötéseink a következők:
 
-* `'c = int => 'd `
-* `int => int => int = 'b => 'c`
+* `'c = int -> 'd `
+* `int -> int -> int = 'b -> 'c`
 
 Végeredmény halmazunk pedig:
 
-* `('d => 'e) / 'a`
+* `('d -> 'e) / 'a`
 
 Itt a perjel csupán annyit jelent, hogy ez már nem feldolgozandó megkötés,
 hanem egy elvégzett behelyettesítés. De lelki szemeid előtt nyugodtan 
 értelmezheted egyenlőségjelnek is.
 
-Haladjunk tovább. Vegyük észre, hogy a második megkötésben található `'c` két 
+Haladjunk tovább. Vegyük észre, hogy a második megkötésben található `'c` 
 megjelenik a harmadik megkötésben is. Alkalmazzuk ismét a 2. szabályt rajta: 
 Kiiktatjuk a második egyenletet és a harmadikban ahol `'c`-t találunk 
-azt átírjuk `int => 'd`-re:
+azt átírjuk `int -> 'd`-re:
 
-* `int => int => int = 'b => int => 'd`
+* `int -> int -> int = 'b -> int -> 'd`
 
 Végül elmentjük a behelyettesítést a végeredmény halmazunkba:
 
-* `('d => 'e) / 'a`
-* `(int => 'd) / 'c`
+* `('d -> 'e) / 'a`
+* `(int -> 'd) / 'c`
 
-Most pedig a 3. szabályt kell alkalmaznunk. Emlékezzünk, hogy `t1 => t2 => t3`
-felfogható `t1 => (t2 => t3)`-ként. Így értelmezve a harmadik egyenletet,
+Most pedig a 3. szabályt kell alkalmaznunk. Emlékezzünk, hogy `t1 -> t2 -> t3`
+felfogható `t1 -> (t2 -> t3)`-ként. Így értelmezve a harmadik egyenletet,
 bontsuk ketté!
 
 * `int = 'b`
-* `int => int = int => 'd`
+* `int -> int = int -> 'd`
 
 (A végeredmény halmaz változatlan.)
 
 Az így kapott új első egyenlet a 2. szabály triviális alkalmazása:
 
-* `int => int = int => 'd`
+* `int -> int = int -> 'd`
 
 Végeredmény halmaz:
 
-* `('d => 'e) / 'a`
-* `(int => 'd) / 'c`
+* `('d -> 'e) / 'a`
+* `(int -> 'd) / 'c`
 * `int / 'b`
 
 Ismét egy nyillal van dolgunk. Bontsunk megint.
@@ -803,8 +804,8 @@ Ez pedig ismét a 2. szabály triviális alkalmazása.
 
 Ekkor a megkötés halmazunk üres, a végeredmény pedig a következő:
 
-* `('d => 'e) / 'a`
-* `(int => 'd) / 'c`
+* `('d -> 'e) / 'a`
+* `(int -> 'd) / 'c`
 * `int / 'b`
 * `int / 'd`
 
@@ -813,24 +814,24 @@ Az algoritmus ezen lépése ekkor véget ér.
 #### Végső típus kiszámítása
 
 A végeredmény halmazunk elkészültével előszedjük ismét a kimeneti típusunk, 
-mely jelen esetben `'a => 'b => 'e`. Itt már nem kell semmiféle eldöntést 
+mely jelen esetben `'a -> 'b -> 'e`. Itt már nem kell semmiféle eldöntést 
 végeznünk, helyettesítsük csak be sorban a végeredmény halmaz elemeit a kimeneti
 típusra. (Emlékeztetőképp a perjel bal oldalán lévő dolgot helyettesítjük be
 a jobboldalira.)
 
-* `('d => 'e) / 'a` => `('d => 'e) => 'b => 'e`
-* `(int => 'd) / 'c` => `'d => 'e => 'b => 'e` (nincs `'c`, így változatlan 
+* `('d -> 'e) / 'a` -> `('d -> 'e) -> 'b -> 'e`
+* `(int -> 'd) / 'c` -> `('d -> 'e) -> 'b -> 'e` (nincs `'c`, így változatlan 
   marad)
-* `int / 'b` => `('d => 'e) => int => 'e`
-* `int / 'd` => `(int => 'e) => int => 'e`
+* `int / 'b` -> `('d -> 'e) -> int -> 'e`
+* `int / 'd` -> `(int -> 'e) -> int -> 'e`
 
-Így tehát a végleges kimeneti típusunk: `(int => 'e) => int => 'e`
+Így tehát a végleges kimeneti típusunk: `(int -> 'e) -> int -> 'e`
 
 Értelmezzük, mit is jelent ez az által, hogy behelyettesítünk a függvény két
 korábban megadott alakjába:
 
 ```
-fun f : (int => 'e) ->
+fun f : (int -> 'e) ->
   fun x : int ->
     f(x + 1) : 'e
   end
@@ -838,15 +839,15 @@ end
 ```
 
 ```
-(int => 'e) külső((int => 'e) f) {
+(int -> 'e) külső((int -> 'e) f) {
   return 'e belső(int x) {
     return f(x + 1)
   }
 }
 ```
 
-Tehát, `külső` egy olyan függvény, mely egy `int => 'e` függvényt vár `f`
-paraméterképp és egy másik `int => 'e` függvénnyel (ez lesz `belső`) tér vissza.
+Tehát, `külső` egy olyan függvény, mely egy `int -> 'e` függvényt vár `f`
+paraméterképp és egy másik `int -> 'e` függvénnyel (ez lesz `belső`) tér vissza.
 `belső` egy olyan függvény, ami egy `int` vagyis szám paramétert vár `x` néven. 
 Visszatérési értéke `f(x+1)`, ami egy `'e` típusú érték.
 
@@ -866,13 +867,13 @@ lehető legáltalánosabb típust adja meg.
 De mit is értünk legáltalánosabb típus alatt? 
 
 Az előző példánál maradva, a függvény végső típusa lehetett volna akár 
-`(int => bool) => int => bool`. Az `'e` egy szabad típusváltozó, így papríon 
+`(int -> bool) -> int -> bool`. Az `'e` egy szabad típusváltozó, így papríon 
 bármit behelyettesíthetnénk a helyére. Ugyanakkor, az ég világon semmi nem köti 
 ki a programban, hogy `f` valóban egy logikai értékkel fog visszatérni. Épp 
 erről koptattam a pennám, hogy szimplán nincs elég információnk arról, hogy 
 tudjuk. 
 
-Ugyanakkor a ló másik oldalán is simán leeshetünk. Az `('a => 'e) => int => 'e` 
+Ugyanakkor a ló másik oldalán is simán leeshetünk. Az `('a -> 'e) -> int -> 'e` 
 se volna megfelelő visszatérési típus, hisz tudjuk az `x` alapján, hogy `f` 
 bemeneti típusa mindenképp szám.
 
@@ -904,9 +905,9 @@ let id = fun x -> x in
 ```
 
 És rögtön lángokban a világ... Ugyanis, hiába jutunk el odáig, hogy az `id` 
-típusa `'a => 'a` (hisz az identitás függvény típustól függően minden értéken 
+típusa `'a -> 'a` (hisz az identitás függvény típustól függően minden értéken 
 működik), amint elérünk az `id(5)` függvényhíváshoz, az `'a` konkretizálódik
-`int => int`-re. Így amikor az `id(true)` kerül kiértékelésre, a 
+`int -> int`-re. Így amikor az `id(true)` kerül kiértékelésre, a 
 típuskövetkeztetés hibába fut, annak ellenére, hogy a két függvényhívás (és a 
 két `'a`) egymástól független.
 
@@ -939,12 +940,12 @@ típusokat is, melyek értéke "kívülről" (vagyis a kötésen túlról) szár
 és egyáltalán nem is általános.
 
 A második változtatás elmagyarázásához vegyük példának az `id` függvényt. A 
-típussémák bevezetése után a függvény típusa `'a . 'a => 'a`. És amikor újra 
+típussémák bevezetése után a függvény típusa `'a . 'a -> 'a`. És amikor újra 
 lekérjük ezt a típust (például a két függvényhívás ellenőrzése közben) új, 
-nem-séma(!) típust gyártunk belőle, például `'b => 'b` és `'c => 'c`, majd 
+nem-séma(!) típust gyártunk belőle, például `'b -> 'b` és `'c -> 'c`, majd 
 ezeket egymástól függetlenül használjuk az algoritmus további részeiben.
 
-Ekkor a `'b => 'b`-ből `int => int` lesz, a `'c => 'c`-ből pedig `bool => bool`
+Ekkor a `'b -> 'b`-ből `int -> int` lesz, a `'c -> 'c`-ből pedig `bool -> bool`
 az algoritmus boldogan lefut és mindenki boldog.
 
 #### Hol is a HM határa?
